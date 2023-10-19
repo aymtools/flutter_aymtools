@@ -12,6 +12,9 @@ dependencies:
     sdk: flutter
   cancellable: ^1.0.5
   weak_collections: ^1.0.0
+  anlifecycle:
+    git:
+      url: https://github.com/aymtools/lifecycle.git
 
 dev_dependencies:
   flutter_test:

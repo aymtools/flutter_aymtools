@@ -19,7 +19,7 @@ class SingleListenerManager {
 Expando<SingleListenerManager> _singleListener = Expando('_singleListener');
 Expando<VoidCallBack> _listenerConvert = Expando('_listenerConvert');
 
-Expando<Stream> _valueNotifierStream = Expando();
+Expando<Stream> _valueNotifierStream = Expando('_valueNotifierStream');
 
 extension ListenableCancellable on Listenable {
   void addCListener(Cancellable cancellable, VoidCallback listener) {
@@ -126,5 +126,26 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
     }
 
     return result;
+  }
+
+  Future<T> whenValue(bool Function(T value) test, {Cancellable? cancellable}) {
+    final v = value;
+    if (test(v)) {
+      return Future.value(v);
+    }
+
+    Completer<T> completer = Completer();
+    if (cancellable == null || cancellable.isAvailable) {
+      Cancellable c =
+          cancellable?.makeCancellable(infectious: true) ?? Cancellable();
+      addCSVListener(c, (value) {
+        final v = value;
+        if (test(v)) {
+          completer.complete(v);
+          c.cancel();
+        }
+      });
+    }
+    return completer.future;
   }
 }
