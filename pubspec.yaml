@@ -1,7 +1,7 @@
-name: flutter_cancellable
+name: aymtools
 description: A new Flutter project.
 version: 0.0.1
-homepage:
+homepage: https://github.com/aymtools/flutter_aymtools/
 
 environment:
   sdk: '>=2.17.0 <4.0.0'

@@ -1,4 +1,4 @@
-library flutter_cancellable;
+library aymtools;
 
 export 'src/expando_ext.dart';
 export 'src/change_notifier_ext.dart';

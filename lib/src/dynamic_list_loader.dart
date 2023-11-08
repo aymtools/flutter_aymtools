@@ -3,21 +3,30 @@ import 'dart:async';
 import 'package:async/async.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/scheduler.dart';
 
+import 'stream_ext.dart';
 import 'widget_ext.dart';
 
 typedef OnDynamicLoadedNotifier<T> = void Function(T data);
 
 class _LoadCounter<K, T> {
   final K keyForData;
+  final void Function(K keyForData) remove;
   int count;
 
   int lastLoadTime = 0;
   T? last;
 
-  _LoadCounter(this.keyForData)
+  _LoadCounter(this.keyForData, this.remove)
       : count = 0,
         lastLoadTime = 0;
+
+  void minusOne() {
+    if (--count <= 0) {
+      remove(keyForData);
+    }
+  }
 }
 
 class _RememberDynamicDataLoader<T> {
@@ -86,6 +95,8 @@ class DynamicDataLoader<K, T> {
   late StreamController _streamController;
   late StreamController<T> _streamControllerUrgent;
 
+  final Set<K> _urgentCache = {};
+
   DynamicDataLoader._(this._dataLoader, this._makeKey,
       {Stream<T>? otherSource,
       int loadInterval = 3000,
@@ -103,8 +114,12 @@ class DynamicDataLoader<K, T> {
     _cancellable.cancel();
   }
 
-  _LoadCounter<K, T> _requiredLoadCounter(K keyForData) =>
-      _loadingDynamic.putIfAbsent(keyForData, () => _LoadCounter(keyForData));
+  _LoadCounter<K, T> _requiredLoadCounter(K keyForData) {
+    final r = _loadingDynamic.putIfAbsent(
+        keyForData, () => _LoadCounter(keyForData, _loadingDynamic.remove));
+    r.count++;
+    return r;
+  }
 
   _LoadCounter<K, T>? _findLoadCounter(K keyForData) {
     return _loadingDynamic[keyForData];
@@ -112,15 +127,10 @@ class DynamicDataLoader<K, T> {
 
   _LoadCounter<K, T> _addLoaderCount(K keyForData, Cancellable cancellable) {
     var lc = _requiredLoadCounter(keyForData);
-    lc.count++;
 
     _streamController.onResume?.call();
 
-    cancellable.whenCancel.then((_) {
-      if ((lc.count) <= 0) {
-        _loadingDynamic.remove(lc.keyForData);
-      }
-    });
+    cancellable.whenCancel.then((_) => lc.minusOne());
     return lc;
   }
 
@@ -128,22 +138,35 @@ class DynamicDataLoader<K, T> {
       Iterable<K> ks, Cancellable cancellable) {
     if (ks.isEmpty) return <_LoadCounter<K, T>>[];
 
-    var result = ks.map((k) {
-      var lc = _requiredLoadCounter(k);
-      lc.count++;
-      return lc;
-    });
-
+    var result = ks.map(_requiredLoadCounter);
     _streamController.onResume?.call();
-
     cancellable.whenCancel.then((_) {
       for (var lc in result) {
-        if ((--lc.count) <= 0) {
-          _loadingDynamic.remove(lc.keyForData);
-        }
+        lc.minusOne();
       }
     });
     return result.toList();
+  }
+
+  void _checkAndLoadUrgent() {
+    Future.microtask(() {
+      if (_urgentCache.isEmpty) return;
+      final loads = _urgentCache.toList();
+      _urgentCache.clear();
+      _dataLoader(loads).then((value) {
+        _recordLastLoad(value);
+        return value;
+      }).then((value) {
+        for (var element in value) {
+          _streamControllerUrgent.add(element);
+        }
+      });
+    });
+  }
+
+  void _addUrgentLoad(_LoadCounter<K, T> lc) {
+    _urgentCache.add(lc.keyForData);
+    _checkAndLoadUrgent();
   }
 
   Stream<T> loadData(K keyForData,
@@ -168,14 +191,7 @@ class DynamicDataLoader<K, T> {
         /// 在队列中 距离上次加载不超过[urgentLimitTime]直接使用上次的数据
         yield lc.last!;
       } else if (!_streamControllerUrgent.isClosed) {
-        _dataLoader([keyForData]).then((value) {
-          if (value.isNotEmpty) {
-            final v = value[0];
-            lc.lastLoadTime = DateTime.now().microsecondsSinceEpoch;
-            lc.last = v;
-            _streamControllerUrgent.add(v);
-          }
-        });
+        _addUrgentLoad(lc);
       }
     }
     if (cancellable.isUnavailable) return;
@@ -233,6 +249,18 @@ class DynamicDataLoader<K, T> {
     ]);
   }
 
+  _recordLastLoad(List<T> data) {
+    if (data.isEmpty) return;
+    var llt = DateTime.now().microsecondsSinceEpoch;
+    for (var e in data) {
+      final k = _makeKey(e);
+      final lc = _findLoadCounter(k);
+      if (lc == null) continue;
+      lc.lastLoadTime = llt;
+      lc.last = e;
+    }
+  }
+
   Stream<T> _createStream() {
     Duration period = Duration(seconds: _loadInterval);
 
@@ -278,22 +306,26 @@ class DynamicDataLoader<K, T> {
         .then((value) => controller.close());
     _streamController = controller;
 
+    getKs() => _loadingDynamic.values
+        .where((e) => e.count > 0)
+        .map((e) => e.keyForData)
+        .toSet()
+        .toList();
+
+    final goOnOrPause = StreamTransformer<List<K>, List<K>>.fromHandlers(
+        handleData: (data, sink) {
+      if (data.isNotEmpty) {
+        sink.add(data);
+      } else {
+        controller.onPause?.call();
+      }
+    });
+
     var loadKeys = controller.stream
         .skipWhile((_) => _cancellable.isUnavailable)
-        .map((_) => _loadingDynamic.values
-            .where((e) => e.count > 0)
-            .map((e) => e.keyForData)
-            .toSet()
-            .toList())
-        .transform<List<K>>(
-      StreamTransformer.fromHandlers(handleData: (data, sink) {
-        if (data.isNotEmpty) {
-          sink.add(data);
-        } else {
-          controller.onPause?.call();
-        }
-      }),
-    );
+        .map((_) => getKs())
+        .transform<List<K>>(goOnOrPause);
+
     if (_loaderSlices > 0) {
       loadKeys = loadKeys
           .slices(_loaderSlices) //超过 [loaderSlices] 个请求需要拆分
@@ -302,19 +334,8 @@ class DynamicDataLoader<K, T> {
 
     return loadKeys
         .asyncMap((event) => _dataLoader(event).catchError((err) => <T>[]))
-        .map(
-      (event) {
-        var llt = DateTime.now().microsecondsSinceEpoch;
-        for (var e in event) {
-          final k = _makeKey(e);
-          final lc = _findLoadCounter(k);
-          if (lc == null) continue;
-          lc.lastLoadTime = llt;
-          lc.last = e;
-        }
-        return event;
-      },
-    ).expand((event) => event);
+        .onData(_recordLastLoad)
+        .expand((event) => event);
   }
 }
 
@@ -403,12 +424,7 @@ class _DynamicLoadBuilderState<K, T> extends State<DynamicLoadBuilder<K, T>>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    DynamicLoadController? loadController =
-        DynamicLoadController.maybeOf(context);
-    if (_cancellable == null &&
-        (loadController == null || loadController.canLoad)) {
-      _loadData();
-    }
+    _loadData();
   }
 
   @override
@@ -417,48 +433,58 @@ class _DynamicLoadBuilderState<K, T> extends State<DynamicLoadBuilder<K, T>>
     if (widget.keyForData != oldWidget.keyForData) {
       _cancellable?.cancel();
       _cancellable = null;
-      _stream = null;
-      DynamicLoadController? loadController =
-          DynamicLoadController.maybeOf(context);
-      if (loadController == null || loadController.canLoad) {
-        _loadData();
-      }
+      _loadData();
     }
   }
 
   _loadData() async {
-    _cancellable?.cancel();
-    _stream = null;
-    if (widget.keyForData == null) {
-      return;
-    }
+    if (DynamicLoadController.maybeOf(context)?.canLoad == false) return;
+    if (_cancellable?.isAvailable == true) return;
+    if (widget.keyForData == null) return;
+
     final cancellable = makeCancellable();
+    cancellable.onCancel.then((value) => _stream = null);
     _cancellable = cancellable;
-    // cancellable.onCancel.then((value) => _stream = null);
+
     if (widget.delayedLoad > 0) {
       await Future.delayed(Duration(microseconds: widget.delayedLoad));
       if (cancellable.isUnavailable) return;
     }
 
-    DynamicDataLoader<K, T> loader =
-        DynamicDataLoader.get<K, T>(widget.loaderName);
-    if (widget.requestCount == 0) {
-    } else if (widget.requestCount < 0) {
-      _stream = loader.loadData(widget.keyForData,
-          cancellable: cancellable, urgent: widget.urgent);
+    final loader = DynamicDataLoader.get<K, T>(widget.loaderName);
+    _makeStream(cancellable, loader, widget.keyForData, widget.requestCount,
+        widget.urgent, widget.otherSource);
+  }
+
+  void _makeStream(Cancellable cancellable, DynamicDataLoader<K, T> loader,
+      K keyForData, int requestCount, bool urgent, Stream<T>? otherSource) {
+    if (cancellable.isUnavailable) return;
+
+    // 处于延迟加载时 进行延迟加载从处理
+    if (Scrollable.recommendDeferredLoadingForContext(context)) {
+      SchedulerBinding.instance.scheduleFrameCallback((_) {
+        scheduleMicrotask(() => _makeStream(cancellable, loader, keyForData,
+            requestCount, urgent, otherSource));
+      });
+      return;
+    }
+
+    if (requestCount == 0) {
+    } else if (requestCount < 0) {
+      _stream =
+          loader.loadData(keyForData, cancellable: cancellable, urgent: urgent);
     } else {
       _stream = loader
-          .loadData(widget.keyForData,
-              cancellable: cancellable, urgent: widget.urgent)
-          .take(widget.requestCount);
+          .loadData(keyForData, cancellable: cancellable, urgent: urgent)
+          .take(requestCount);
     }
-    if (widget.otherSource != null) {
+    if (otherSource != null) {
       if (_stream == null) {
-        _stream = widget.otherSource;
+        _stream = otherSource;
       } else {
         _stream = StreamGroup.merge(<Stream<T>>[
           _stream!,
-          widget.otherSource!,
+          otherSource,
         ]);
       }
     }
