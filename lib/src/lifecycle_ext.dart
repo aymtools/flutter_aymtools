@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/material.dart';
@@ -22,18 +24,6 @@ extension LifecycleObserverRegisterMixinContextExt
       });
 }
 
-extension LifecycleOwnerStateMixinContextExt on LifecycleOwnerStateMixin {
-  Future<BuildContext> get requiredContext =>
-      whenMoreThanState(LifecycleState.started).then((_) => context);
-
-  Future<S> requiredState<S extends State>() => requiredContext.then((value) {
-        if (value is StatefulElement && value.state is S) {
-          return value.state as S;
-        }
-        return Future<S>.value(value.findAncestorStateOfType<S>());
-      });
-}
-
 final Map<LifecycleObserverRegister, _CacheMapObserver> _map = {};
 
 class _CacheMapObserver with LifecycleEventDefaultObserver {
@@ -44,7 +34,7 @@ class _CacheMapObserver with LifecycleEventDefaultObserver {
       _cancellable.makeCancellable(infectious: false, father: other);
 
   _CacheMapObserver(this.registerMixin) : _cancellable = Cancellable() {
-    registerMixin.registerLifecycleObserver(this);
+    registerMixin.registerLifecycleObserver(this, fullCycle: true);
     _cancellable.onCancel.then((value) => _map.remove(this));
   }
 
@@ -62,5 +52,20 @@ extension LifecycleObserverRegisterCacnellable on LifecycleObserverRegister {
     return _map
         .putIfAbsent(this, () => _CacheMapObserver(this))
         ._makeCancellableForLive(other: other);
+  }
+
+  void repeatOnLifecycle<T>(LifecycleState targetState,
+      FutureOr<T> Function(Cancellable cancellable) block) {
+    Cancellable? cancellable;
+    final observer = LifecycleObserver.stateChange((state) {
+      if (state >= targetState && cancellable?.isUnavailable == true) {
+        cancellable = makeLiveCancellable();
+        block(cancellable!);
+      } else if (state < targetState && cancellable?.isAvailable == true) {
+        cancellable?.cancel();
+        cancellable = null;
+      }
+    });
+    registerLifecycleObserver(observer, fullCycle: true);
   }
 }
