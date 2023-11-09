@@ -10,3 +10,4 @@ export 'src/dialog_ext.dart';
 export 'src/sliver_ext.dart';
 export 'src/sliver_load_more.dart';
 export 'src/stream_ext.dart';
+export 'src/string_ext.dart';
