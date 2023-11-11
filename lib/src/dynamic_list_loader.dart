@@ -10,9 +10,9 @@ import 'widget_ext.dart';
 
 typedef OnDynamicLoadedNotifier<T> = void Function(T data);
 
-class _LoadCounter<K, T> {
-  final K keyForData;
-  final void Function(K keyForData) remove;
+class _LoadCounter<T> {
+  final Object keyForData;
+  final void Function(Object keyForData) remove;
   int count;
 
   int lastLoadTime = 0;
@@ -45,19 +45,19 @@ class _RememberDynamicDataLoader<T> {
   }
 }
 
-class DynamicDataLoader<K, T> {
+class DynamicDataLoader<T> {
   static final Map<_RememberDynamicDataLoader, DynamicDataLoader> _loaders = {};
 
-  static DynamicDataLoader<K, T> get<K, T>([String? loaderName]) {
+  static DynamicDataLoader<T> get<T>([String? loaderName]) {
     final key = _RememberDynamicDataLoader<T>(loaderName);
     final loader = _loaders[key];
-    assert(loader != null, 'Cannot find loader  (<$K,$T> ${loaderName ?? ''})');
-    assert(loader! is DynamicDataLoader<K, T>,
-        'The found loader type does not match  (<$K,$T> ${loaderName ?? ''})');
-    return loader! as DynamicDataLoader<K, T>;
+    assert(loader != null, 'Cannot find loader  (<$T> ${loaderName ?? ''})');
+    assert(loader! is DynamicDataLoader<T>,
+        'The found loader type does not match  (<$T> ${loaderName ?? ''})');
+    return loader! as DynamicDataLoader<T>;
   }
 
-  static void makeLoader<K, T>(
+  static DynamicDataLoader<T> makeLoader<K extends Object, T>(
     K Function(T data) makeKey,
     Future<List<T>> Function(List<K> ks) dataLoader, {
     String? loaderName,
@@ -65,21 +65,32 @@ class DynamicDataLoader<K, T> {
     int loadInterval = 3000, // 加载间隔 单位毫秒
     int urgentLimitTime = 1000, // 距离下载数据时间内不触发紧急加载  单位毫秒
     int loaderSlices = 0, // 切片请求数量 <=0 为不限制 否则按照slices进行切片请求
+    bool isRemembered = true, // 是否记录到缓存中 false时为独立控制
   }) {
-    final key = _RememberDynamicDataLoader<T>(loaderName);
-    assert(!_loaders.containsKey(key),
-        '<$K,$T> ${loaderName ?? ''} Loader existed');
-
-    DynamicDataLoader<K, T> loader = DynamicDataLoader._(dataLoader, makeKey,
+    creator() => DynamicDataLoader._(
+        (ks) => dataLoader(ks.whereType<K>().toList()), makeKey, (k) => k is K,
         urgentLimitTime: urgentLimitTime,
         loaderSlices: loaderSlices,
         otherSource: otherSource);
 
-    _loaders[key] = loader;
+    DynamicDataLoader<T> loader;
+
+    if (isRemembered) {
+      final key = _RememberDynamicDataLoader<T>(loaderName);
+      assert(!_loaders.containsKey(key),
+          '<$T> ${loaderName ?? ''} Loader existed');
+      loader = creator();
+      _loaders[key] = loader;
+    } else {
+      loader = creator();
+    }
+    return loader;
   }
 
-  final Future<List<T>> Function(List<K> ks) _dataLoader;
-  final K Function(T data) _makeKey;
+  final bool Function(Object key) _keyCheck;
+
+  final Future<List<T>> Function(List<Object> ks) _dataLoader;
+  final Object Function(T data) _makeKey;
   final int _urgentLimitTime;
   final int _loadInterval;
 
@@ -88,25 +99,27 @@ class DynamicDataLoader<K, T> {
 
   final Cancellable _cancellable;
 
-  final Map<K, _LoadCounter<K, T>> _loadingDynamic = {};
+  final Map<Object, _LoadCounter<T>> _loadingDynamic = {};
 
   late Stream<T> _stream;
 
   late StreamController _streamController;
   late StreamController<T> _streamControllerUrgent;
 
-  final Set<K> _urgentCache = {};
+  final Set<Object> _urgentCache = {};
 
-  DynamicDataLoader._(this._dataLoader, this._makeKey,
+  DynamicDataLoader._(this._dataLoader, this._makeKey, this._keyCheck,
       {Stream<T>? otherSource,
       int loadInterval = 3000,
       int urgentLimitTime = 1000,
-      int loaderSlices = 0})
+      int loaderSlices = 0,
+      Cancellable? disposeCancellable})
       : _otherSource = otherSource,
         _loadInterval = loadInterval,
         _urgentLimitTime = urgentLimitTime,
         _loaderSlices = loaderSlices,
-        _cancellable = Cancellable() {
+        _cancellable = disposeCancellable?.makeCancellable(infectious: true) ??
+            Cancellable() {
     _initStream();
   }
 
@@ -114,18 +127,18 @@ class DynamicDataLoader<K, T> {
     _cancellable.cancel();
   }
 
-  _LoadCounter<K, T> _requiredLoadCounter(K keyForData) {
+  _LoadCounter<T> _requiredLoadCounter(Object keyForData) {
     final r = _loadingDynamic.putIfAbsent(
         keyForData, () => _LoadCounter(keyForData, _loadingDynamic.remove));
     r.count++;
     return r;
   }
 
-  _LoadCounter<K, T>? _findLoadCounter(K keyForData) {
+  _LoadCounter<T>? _findLoadCounter(Object keyForData) {
     return _loadingDynamic[keyForData];
   }
 
-  _LoadCounter<K, T> _addLoaderCount(K keyForData, Cancellable cancellable) {
+  _LoadCounter<T> _addLoaderCount(Object keyForData, Cancellable cancellable) {
     var lc = _requiredLoadCounter(keyForData);
 
     _streamController.onResume?.call();
@@ -134,9 +147,9 @@ class DynamicDataLoader<K, T> {
     return lc;
   }
 
-  List<_LoadCounter<K, T>> _addLoadCounters(
-      Iterable<K> ks, Cancellable cancellable) {
-    if (ks.isEmpty) return <_LoadCounter<K, T>>[];
+  List<_LoadCounter<T>> _addLoadCounters(
+      Iterable<Object> ks, Cancellable cancellable) {
+    if (ks.isEmpty) return <_LoadCounter<T>>[];
 
     var result = ks.map(_requiredLoadCounter);
     _streamController.onResume?.call();
@@ -164,20 +177,22 @@ class DynamicDataLoader<K, T> {
     });
   }
 
-  void _addUrgentLoad(_LoadCounter<K, T> lc) {
+  void _addUrgentLoad(_LoadCounter<T> lc) {
     _urgentCache.add(lc.keyForData);
     _checkAndLoadUrgent();
   }
 
-  Stream<T> loadData(K keyForData,
+  Stream<T> loadData(Object? keyForData,
       {Cancellable? cancellable, bool urgent = false}) async* {
     if (keyForData == null) return;
+    assert(_keyCheck(keyForData),
+        'DynamicDataLoader does not support this type (${keyForData.runtimeType}) of Key loading');
     cancellable = _cancellable.makeCancellable(father: cancellable);
     yield* _loadDynamic(keyForData, cancellable, urgent);
   }
 
   Stream<T> _loadDynamic(
-      K keyForData, Cancellable cancellable, bool urgent) async* {
+      Object keyForData, Cancellable cancellable, bool urgent) async* {
     if (cancellable.isUnavailable) return;
 
     var lc = _addLoaderCount(keyForData, cancellable);
@@ -199,15 +214,24 @@ class DynamicDataLoader<K, T> {
     yield* _stream.where((event) => _makeKey(event) == keyForData);
   }
 
-  void preloadDynamic(Iterable<K> keys, {Cancellable? cancellable}) async {
+  void preloadDynamic(Iterable<Object> keys, {Cancellable? cancellable}) async {
     if (keys.isEmpty) return;
+    assert(() {
+      for (var element in keys) {
+        assert(_keyCheck(element),
+            'DynamicDataLoader does not support this type (${element.runtimeType}) of Key loading');
+      }
+      return true;
+    }());
     cancellable = _cancellable.makeCancellable(father: cancellable);
     if (cancellable.isUnavailable) return;
     _addLoadCounters(keys, cancellable);
   }
 
-  void addOnDynamicLoadedNotifier(K keyForData,
+  void addOnDynamicLoadedNotifier(Object keyForData,
       OnDynamicLoadedNotifier<T> notifier, Cancellable cancellable) {
+    assert(_keyCheck(keyForData),
+        'DynamicDataLoader does not support this type (${keyForData.runtimeType}) of Key loading');
     if (cancellable.isUnavailable) return;
     cancellable = _cancellable.makeCancellable(father: cancellable);
     _stream
@@ -216,8 +240,10 @@ class DynamicDataLoader<K, T> {
         .listen(notifier);
   }
 
-  void addOnFirstLoadedNotifier(K keyForData,
+  void addOnFirstLoadedNotifier(Object keyForData,
       OnDynamicLoadedNotifier<T> notifier, Cancellable cancellable) {
+    assert(_keyCheck(keyForData),
+        'DynamicDataLoader does not support this type (${keyForData.runtimeType}) of Key loading');
     cancellable = _cancellable.makeCancellable(father: cancellable);
     onceNotifier(T data) {
       if (cancellable.isAvailable) notifier(data);
@@ -312,8 +338,9 @@ class DynamicDataLoader<K, T> {
         .toSet()
         .toList();
 
-    final goOnOrPause = StreamTransformer<List<K>, List<K>>.fromHandlers(
-        handleData: (data, sink) {
+    final goOnOrPause =
+        StreamTransformer<List<Object>, List<Object>>.fromHandlers(
+            handleData: (data, sink) {
       if (data.isNotEmpty) {
         sink.add(data);
       } else {
@@ -324,7 +351,7 @@ class DynamicDataLoader<K, T> {
     var loadKeys = controller.stream
         .skipWhile((_) => _cancellable.isUnavailable)
         .map((_) => getKs())
-        .transform<List<K>>(goOnOrPause);
+        .transform<List<Object>>(goOnOrPause);
 
     if (_loaderSlices > 0) {
       loadKeys = loadKeys
@@ -339,14 +366,17 @@ class DynamicDataLoader<K, T> {
   }
 }
 
-class DynamicLoadController extends InheritedWidget {
+class DynamicLoadController<T> extends InheritedWidget {
+  final DynamicDataLoader<T>? loader;
   final bool canLoad;
 
-  const DynamicLoadController(this.canLoad, {super.key, required super.child});
+  const DynamicLoadController(
+      {bool? canLoad, this.loader, super.key, required super.child})
+      : canLoad = canLoad ?? true;
 
   @override
   bool updateShouldNotify(covariant DynamicLoadController oldWidget) {
-    return canLoad != oldWidget.canLoad;
+    return canLoad != oldWidget.canLoad || loader != oldWidget.loader;
   }
 
   static DynamicLoadController? maybeOf(BuildContext context) {
@@ -360,17 +390,30 @@ class DynamicLoadController extends InheritedWidget {
   }
 
   static bool isCanLoad(BuildContext context, {bool listen = false}) {
-    final bool result = of(context).canLoad;
+    final bool result = maybeOf(context)?.canLoad ?? true;
     return result;
   }
+
+// static DynamicDataLoader<T>? dataLoader<T>(BuildContext context,
+//     {bool listen = false}) {
+//   final loader = maybeOf(context)?.loader;
+//   if (loader != null && loader is DynamicDataLoader<T>) {
+//     return loader;
+//   }
+// }
 }
 
-class DynamicLoadBuilder<K, T> extends StatefulWidget {
+Widget Function(BuildContext context, T? data, Widget? child) _builder<T>(
+        Widget Function(BuildContext context, T data, Widget? child) builder) =>
+    (BuildContext context, T? data, Widget? child) =>
+        builder(context, data as T, child);
+
+class DynamicLoadBuilder<T> extends StatefulWidget {
   ///指定加载器名字
   final String? loaderName;
 
   ///需要加载的数据 的key
-  final K keyForData;
+  final Object? keyForData;
 
   final Widget? child;
 
@@ -400,6 +443,21 @@ class DynamicLoadBuilder<K, T> extends StatefulWidget {
   const DynamicLoadBuilder(
       {super.key,
       this.initData,
+      this.keyForData,
+      required this.builder,
+      this.child,
+      this.requestCount = -1,
+      this.urgent = false,
+      this.onFirstLoaded,
+      this.onLoadedNotifier,
+      this.loaderName,
+      this.otherSource,
+      this.delayedLoad = 0})
+      : assert(!(keyForData == null && initData == null),
+            'keyForData or initData must not null');
+
+  const DynamicLoadBuilder.key(
+      {super.key,
       required this.keyForData,
       required this.builder,
       this.child,
@@ -410,14 +468,31 @@ class DynamicLoadBuilder<K, T> extends StatefulWidget {
       this.loaderName,
       this.otherSource,
       this.delayedLoad = 0})
-      : assert(keyForData != null, 'keyForData must not null');
+      : initData = null;
+
+  DynamicLoadBuilder.value(
+      {super.key,
+      required T this.initData,
+      required Widget Function(BuildContext context, T data, Widget? child)
+          builder,
+      this.child,
+      this.requestCount = -1,
+      this.urgent = false,
+      this.onFirstLoaded,
+      this.onLoadedNotifier,
+      this.loaderName,
+      this.otherSource,
+      this.delayedLoad = 0})
+      : keyForData = null,
+        builder = _builder(builder);
 
   @override
-  State<DynamicLoadBuilder> createState() => _DynamicLoadBuilderState<K, T>();
+  State<DynamicLoadBuilder> createState() => _DynamicLoadBuilderState<T>();
 }
 
-class _DynamicLoadBuilderState<K, T> extends State<DynamicLoadBuilder<K, T>>
+class _DynamicLoadBuilderState<T> extends State<DynamicLoadBuilder<T>>
     with CancellableState {
+  late Object? _k;
   Stream<T>? _stream;
   Cancellable? _cancellable;
 
@@ -428,19 +503,33 @@ class _DynamicLoadBuilderState<K, T> extends State<DynamicLoadBuilder<K, T>>
   }
 
   @override
-  void didUpdateWidget(covariant DynamicLoadBuilder<K, T> oldWidget) {
+  void didUpdateWidget(covariant DynamicLoadBuilder<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.keyForData != oldWidget.keyForData) {
-      _cancellable?.cancel();
-      _cancellable = null;
-      _loadData();
+    if (widget.loaderName != oldWidget.loaderName) {
+      _reload();
+    } else if (widget.keyForData != oldWidget.keyForData ||
+        widget.initData != oldWidget.initData) {
+      final loader = DynamicDataLoader.get<T>(widget.loaderName);
+      final next = widget.initData ??
+          (widget.initData == null
+              ? null
+              : loader._makeKey(widget.initData as T));
+      if (_k != next) {
+        _reload();
+      }
     }
+  }
+
+  _reload() {
+    _cancellable?.cancel();
+    _cancellable = null;
+    _loadData();
   }
 
   _loadData() async {
     if (DynamicLoadController.maybeOf(context)?.canLoad == false) return;
     if (_cancellable?.isAvailable == true) return;
-    if (widget.keyForData == null) return;
+    if (widget.keyForData == null && widget.initData == null) return;
 
     final cancellable = makeCancellable();
     cancellable.onCancel.then((value) => _stream = null);
@@ -451,13 +540,21 @@ class _DynamicLoadBuilderState<K, T> extends State<DynamicLoadBuilder<K, T>>
       if (cancellable.isUnavailable) return;
     }
 
-    final loader = DynamicDataLoader.get<K, T>(widget.loaderName);
-    _makeStream(cancellable, loader, widget.keyForData, widget.requestCount,
-        widget.urgent, widget.otherSource);
+    final loader = DynamicDataLoader.get<T>(widget.loaderName);
+
+    _k = widget.keyForData ?? loader._makeKey(widget.initData as T);
+
+    _makeStream(cancellable, loader, _k!, widget.requestCount, widget.urgent,
+        widget.otherSource);
   }
 
-  void _makeStream(Cancellable cancellable, DynamicDataLoader<K, T> loader,
-      K keyForData, int requestCount, bool urgent, Stream<T>? otherSource) {
+  void _makeStream(
+      Cancellable cancellable,
+      DynamicDataLoader<T> loader,
+      Object keyForData,
+      int requestCount,
+      bool urgent,
+      Stream<T>? otherSource) {
     if (cancellable.isUnavailable) return;
 
     // 处于延迟加载时 进行延迟加载从处理
@@ -514,8 +611,8 @@ class _DynamicLoadBuilderState<K, T> extends State<DynamicLoadBuilder<K, T>>
         : StreamBuilder<T>(
             initialData: widget.initData,
             stream: _stream,
-            builder: (context, snapshot) =>
-                widget.builder(context, snapshot.data, widget.child),
+            builder: (context, snapshot) => widget.builder(
+                context, snapshot.data ?? widget.initData, widget.child),
           );
   }
 }
