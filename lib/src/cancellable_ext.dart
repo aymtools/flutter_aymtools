@@ -8,3 +8,11 @@ extension CancellableRemake on Cancellable? {
     return makeCancellable();
   }
 }
+//
+// Expando<Cancellable> _functionCancellable = Expando('_functionCancellable');
+//
+// extension CancellableFunction on Function {
+//   bool get isCancelled => _functionCancellable[this]?.isUnavailable ?? false;
+//
+//
+// }
