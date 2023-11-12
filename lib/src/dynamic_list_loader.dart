@@ -13,19 +13,35 @@ typedef OnDynamicLoadedNotifier<T> = void Function(T data);
 class _LoadCounter<T> {
   final Object keyForData;
   final void Function(Object keyForData) remove;
-  int count;
+  final Duration? delayedDuration;
+  int _count;
 
-  int lastLoadTime = 0;
-  T? last;
+  int _lastLoadTime = 0;
+  T? _last;
+  Timer? _timer;
 
-  _LoadCounter(this.keyForData, this.remove)
-      : count = 0,
-        lastLoadTime = 0;
+  _LoadCounter(this.keyForData, this.remove, this.delayedDuration)
+      : _count = 0,
+        _lastLoadTime = 0;
+
+  void plusOne() {
+    _timer?.cancel();
+    _timer = null;
+    _count++;
+  }
 
   void minusOne() {
-    if (--count <= 0) {
-      remove(keyForData);
+    if (--_count <= 0) {
+      if (delayedDuration == null || delayedDuration == Duration.zero) {
+        remove(keyForData);
+      } else {
+        _timer ??= Timer(delayedDuration!, () => remove(keyForData));
+      }
     }
+  }
+
+  bool get isNeedLoad {
+    return _count > 0 || _timer != null;
   }
 }
 
@@ -66,12 +82,23 @@ class DynamicDataLoader<T> {
     int urgentLimitTime = 1000, // 距离下载数据时间内不触发紧急加载  单位毫秒
     int loaderSlices = 0, // 切片请求数量 <=0 为不限制 否则按照slices进行切片请求
     bool isRemembered = true, // 是否记录到缓存中 false时为独立控制
+    int? delayedRemove, // 当计数器为0时是否延迟后移除 继续在队列中加载   单位毫秒
+    int removedLoadTimes = 0, // 当计数器为0时在加载n次 继续在队列中加载
   }) {
+    Duration? delayedRemoved = delayedRemove != null && delayedRemove > 0
+        ? Duration(milliseconds: delayedRemove)
+        : removedLoadTimes <= 0
+            ? null
+            : Duration(milliseconds: loadInterval * removedLoadTimes + 1);
     creator() => DynamicDataLoader._(
-        (ks) => dataLoader(ks.whereType<K>().toList()), makeKey, (k) => k is K,
-        urgentLimitTime: urgentLimitTime,
-        loaderSlices: loaderSlices,
-        otherSource: otherSource);
+          (ks) => dataLoader(ks.whereType<K>().toList()),
+          makeKey,
+          (k) => k is K,
+          urgentLimitTime: urgentLimitTime <= 0 ? 0 : urgentLimitTime,
+          loaderSlices: loaderSlices,
+          otherSource: otherSource,
+          delayedRemoved: delayedRemoved,
+        );
 
     DynamicDataLoader<T> loader;
 
@@ -96,6 +123,7 @@ class DynamicDataLoader<T> {
 
   final int _loaderSlices;
   final Stream<T>? _otherSource;
+  final Duration? delayedRemoved;
 
   final Cancellable _cancellable;
 
@@ -113,6 +141,7 @@ class DynamicDataLoader<T> {
       int loadInterval = 3000,
       int urgentLimitTime = 1000,
       int loaderSlices = 0,
+      this.delayedRemoved,
       Cancellable? disposeCancellable})
       : _otherSource = otherSource,
         _loadInterval = loadInterval,
@@ -128,9 +157,9 @@ class DynamicDataLoader<T> {
   }
 
   _LoadCounter<T> _requiredLoadCounter(Object keyForData) {
-    final r = _loadingDynamic.putIfAbsent(
-        keyForData, () => _LoadCounter(keyForData, _loadingDynamic.remove));
-    r.count++;
+    final r = _loadingDynamic.putIfAbsent(keyForData,
+        () => _LoadCounter(keyForData, _loadingDynamic.remove, delayedRemoved));
+    r.plusOne();
     return r;
   }
 
@@ -200,11 +229,13 @@ class DynamicDataLoader<T> {
     ///紧急加载
     if (urgent == true) {
       /// 紧急加载动态数据
-      if (lc.last != null &&
-          DateTime.now().microsecondsSinceEpoch - lc.lastLoadTime <
+      if (_urgentLimitTime <= 0) {
+        _addUrgentLoad(lc);
+      } else if (lc._last != null &&
+          DateTime.now().millisecondsSinceEpoch - lc._lastLoadTime <
               _urgentLimitTime) {
         /// 在队列中 距离上次加载不超过[urgentLimitTime]直接使用上次的数据
-        yield lc.last!;
+        yield lc._last!;
       } else if (!_streamControllerUrgent.isClosed) {
         _addUrgentLoad(lc);
       }
@@ -266,6 +297,7 @@ class DynamicDataLoader<T> {
     StreamController<T> otherWrapper = StreamController();
     _otherSource
         ?.bindCancellable(_cancellable)
+        .onData(_recordLastLoadValue)
         .listen((event) => otherWrapper.add(event));
 
     _stream = StreamGroup.mergeBroadcast([
@@ -275,20 +307,33 @@ class DynamicDataLoader<T> {
     ]);
   }
 
+  _recordLastLoadValue(T data) {
+    var llt = DateTime.now().millisecondsSinceEpoch;
+    final k = _makeKey(data);
+    final lc = _findLoadCounter(k);
+    if (lc == null) return;
+    lc._lastLoadTime = llt;
+    lc._last = data;
+  }
+
   _recordLastLoad(List<T> data) {
     if (data.isEmpty) return;
-    var llt = DateTime.now().microsecondsSinceEpoch;
+    var llt = DateTime.now().millisecondsSinceEpoch;
     for (var e in data) {
       final k = _makeKey(e);
       final lc = _findLoadCounter(k);
       if (lc == null) continue;
-      lc.lastLoadTime = llt;
-      lc.last = e;
+      lc._lastLoadTime = llt;
+      lc._last = e;
     }
   }
 
   Stream<T> _createStream() {
-    Duration period = Duration(seconds: _loadInterval);
+    if (_loadInterval <= 0) {
+      return StreamController<T>().stream;
+    }
+
+    Duration period = Duration(milliseconds: _loadInterval);
 
     late StreamController controller;
     Stopwatch watch = Stopwatch();
@@ -333,7 +378,7 @@ class DynamicDataLoader<T> {
     _streamController = controller;
 
     getKs() => _loadingDynamic.values
-        .where((e) => e.count > 0)
+        .where((e) => e.isNeedLoad)
         .map((e) => e.keyForData)
         .toSet()
         .toList();
@@ -366,17 +411,15 @@ class DynamicDataLoader<T> {
   }
 }
 
-class DynamicLoadController<T> extends InheritedWidget {
-  final DynamicDataLoader<T>? loader;
+class DynamicLoadController extends InheritedWidget {
   final bool canLoad;
 
-  const DynamicLoadController(
-      {bool? canLoad, this.loader, super.key, required super.child})
+  const DynamicLoadController({bool? canLoad, super.key, required super.child})
       : canLoad = canLoad ?? true;
 
   @override
   bool updateShouldNotify(covariant DynamicLoadController oldWidget) {
-    return canLoad != oldWidget.canLoad || loader != oldWidget.loader;
+    return canLoad != oldWidget.canLoad;
   }
 
   static DynamicLoadController? maybeOf(BuildContext context) {
@@ -393,14 +436,6 @@ class DynamicLoadController<T> extends InheritedWidget {
     final bool result = maybeOf(context)?.canLoad ?? true;
     return result;
   }
-
-// static DynamicDataLoader<T>? dataLoader<T>(BuildContext context,
-//     {bool listen = false}) {
-//   final loader = maybeOf(context)?.loader;
-//   if (loader != null && loader is DynamicDataLoader<T>) {
-//     return loader;
-//   }
-// }
 }
 
 Widget Function(BuildContext context, T? data, Widget? child) _builder<T>(
@@ -536,7 +571,7 @@ class _DynamicLoadBuilderState<T> extends State<DynamicLoadBuilder<T>>
     _cancellable = cancellable;
 
     if (widget.delayedLoad > 0) {
-      await Future.delayed(Duration(microseconds: widget.delayedLoad));
+      await Future.delayed(Duration(milliseconds: widget.delayedLoad));
       if (cancellable.isUnavailable) return;
     }
 
