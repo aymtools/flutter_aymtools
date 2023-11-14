@@ -1,5 +1,5 @@
 name: aymtools
-description: A new Flutter project.
+description: A common scaffolding for rapid development of flutter.
 version: 0.0.1
 homepage: https://github.com/aymtools/flutter_aymtools/
 
@@ -14,6 +14,7 @@ dependencies:
   async: ^2.9.0
   cancellable: ^1.0.5
   weak_collections: ^1.0.0
+  anlifecycle: ^1.0.0
 
 dev_dependencies:
   flutter_test:
