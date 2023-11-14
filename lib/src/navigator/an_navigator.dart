@@ -19,18 +19,23 @@ class AnNavigator extends Navigator {
     super.onUnknownRoute,
     super.observers = const <NavigatorObserver>[],
     super.restorationScopeId,
-    super.onGenerateInitialRoutes = CustomGenerateRoutePageNavigatorState.defaultGenerateInitialRoutes,
+    super.onGenerateInitialRoutes =
+        CustomGenerateRoutePageNavigatorState.defaultGenerateInitialRoutes,
     super.reportsRouteUpdateToEngine = false,
     super.clipBehavior = Clip.hardEdge,
     super.requestFocus = true,
     this.onGenerateRoutePage,
     this.onGeneratePushPageInterceptor,
     this.onGenerateRoutePageWidget,
+    this.pageCreator,
     this.onPageWidgetConvertRoute = _onPageWidgetConvertRoute,
   });
 
   @override
   NavigatorState createState() => AnNavigatorState();
+
+  final Map<String, Widget Function(BuildContext context, Object? argments)>?
+      pageCreator;
 
   final RoutePageFactory? onGenerateRoutePage;
 
@@ -90,6 +95,12 @@ class AnNavigatorState extends NavigatorState
 
   @override
   Widget? generateRoutePageWidget<T>(String name, Object? arguments) {
+    if (widget.pageCreator != null && widget.pageCreator!.isNotEmpty) {
+      final builder = widget.pageCreator![name];
+      if (builder != null) {
+        return Builder(builder: (context) => builder(context, arguments));
+      }
+    }
     return widget.onGenerateRoutePageWidget?.call(name, arguments);
   }
 
