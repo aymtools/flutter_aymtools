@@ -54,8 +54,9 @@ extension LifecycleObserverRegisterCacnellable on LifecycleObserverRegister {
         ._makeCancellableForLive(other: other);
   }
 
-  void repeatOnLifecycle<T>(LifecycleState targetState,
-      FutureOr<T> Function(Cancellable cancellable) block) {
+  void repeatOnLifecycle<T>(
+      {LifecycleState targetState = LifecycleState.started,
+      required FutureOr<T> Function(Cancellable cancellable) block}) {
     Cancellable? cancellable;
     final observer = LifecycleObserver.stateChange((state) {
       if (state >= targetState && cancellable?.isUnavailable == true) {
