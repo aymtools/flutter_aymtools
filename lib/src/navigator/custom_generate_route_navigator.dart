@@ -4,8 +4,8 @@ import 'package:flutter/widgets.dart';
 mixin CustomGenerateRoutePageNavigatorState on NavigatorState {
   Widget? generateRoutePageContent<T>(String name, Object? arguments);
 
-  Page<T?> convertPageContentToRoute<T>(
-      String name, Object? arguments, Widget pageContent);
+  Page<T?> convertPageContentToRoute<T>(String name, Object? arguments,
+      Widget pageContent);
 
   Page<T?>? generateRoutePage<T>(String name, Object? arguments);
 
@@ -15,19 +15,20 @@ mixin CustomGenerateRoutePageNavigatorState on NavigatorState {
     final pw = generateRoutePageContent(name, arguments);
     if (pw != null) {
       result = convertPageContentToRoute(name, arguments, pw);
-      assert(result.name == null, 'RouteSettings name must not null');
+      assert(result.name != null, 'RouteSettings name must not null');
       return result;
     }
 
     result = generateRoutePage(name, arguments);
-    assert(result != null && result.name == null,
-        'RouteSettings name must not null');
+
     if (result == null) {
       return RouteSettings(
         name: name,
         arguments: arguments,
       );
     }
+    assert(result != null &&
+        result.name != null, 'RouteSettings name must not null');
     return result;
   }
 
@@ -45,11 +46,11 @@ mixin CustomGenerateRoutePageNavigatorState on NavigatorState {
       if (widget.onGenerateRoute == null) {
         throw FlutterError(
           'Navigator.onGenerateRoute was null, but the route named "$name" was referenced.\n'
-          'To use the Navigator API with named routes (pushNamed, pushReplacementNamed, or '
-          'pushNamedAndRemoveUntil), the Navigator must be provided with an '
-          'onGenerateRoute handler.\n'
-          'The Navigator was:\n'
-          '  $this',
+              'To use the Navigator API with named routes (pushNamed, pushReplacementNamed, or '
+              'pushNamedAndRemoveUntil), the Navigator must be provided with an '
+              'onGenerateRoute handler.\n'
+              'The Navigator was:\n'
+              '  $this',
         );
       }
       return true;
@@ -64,7 +65,7 @@ mixin CustomGenerateRoutePageNavigatorState on NavigatorState {
                 'Navigator.onGenerateRoute returned null when requested to build route "$name".'),
             ErrorDescription(
               'The onGenerateRoute callback must never return null, unless an onUnknownRoute '
-              'callback is provided as well.',
+                  'callback is provided as well.',
             ),
             DiagnosticsProperty<NavigatorState>('The Navigator was', this,
                 style: DiagnosticsTreeStyle.errorProperty),
@@ -92,8 +93,7 @@ mixin CustomGenerateRoutePageNavigatorState on NavigatorState {
   }
 
   @override
-  Future<T?> pushNamed<T extends Object?>(
-    String routeName, {
+  Future<T?> pushNamed<T extends Object?>(String routeName, {
     Object? arguments,
   }) {
     // this.pushNamed(routeName);
@@ -105,21 +105,20 @@ mixin CustomGenerateRoutePageNavigatorState on NavigatorState {
   }
 
   @override
-  Future<T?> pushNamedAndRemoveUntil<T extends Object?>(
-    String newRouteName,
-    RoutePredicate predicate, {
-    Object? arguments,
-  }) {
+  Future<T?> pushNamedAndRemoveUntil<T extends Object?>(String newRouteName,
+      RoutePredicate predicate, {
+        Object? arguments,
+      }) {
     return pushAndRemoveUntil<T?>(
         _routeNamed<T>(newRouteName, arguments: arguments)!, predicate);
   }
 
   @override
   Future<T?> pushReplacementNamed<T extends Object?, TO extends Object?>(
-    String routeName, {
-    TO? result,
-    Object? arguments,
-  }) {
+      String routeName, {
+        TO? result,
+        Object? arguments,
+      }) {
     return pushReplacement<T?, TO>(
         _routeNamed<T>(routeName, arguments: arguments)!,
         result: result);
@@ -164,7 +163,8 @@ mixin CustomGenerateRoutePageNavigatorState on NavigatorState {
               exception: 'Could not navigate to initial route.\n'
                   'The requested route name was: "/$initialRouteName"\n'
                   'There was no corresponding route in the app, and therefore the initial route specified will be '
-                  'ignored and "${Navigator.defaultRouteName}" will be used instead.',
+                  'ignored and "${Navigator
+                  .defaultRouteName}" will be used instead.',
             ),
           );
           return true;
