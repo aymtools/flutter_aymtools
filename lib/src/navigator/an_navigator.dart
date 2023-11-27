@@ -3,10 +3,24 @@ import 'package:flutter/material.dart';
 import 'custom_generate_route_navigator.dart';
 import 'interceptor_navigator.dart';
 
-Page<T> _onPageWidgetConvertRoute<T>(
-    Widget page, String name, Object? arguments) {
-  return MaterialPage(child: page, name: name, arguments: arguments);
-}
+typedef PageContentCreator = Widget Function(
+    BuildContext context, Object? argments);
+typedef OnGeneratePageContent = Widget? Function(
+    String name, Object? arguments);
+typedef PageContentWrapper = Widget Function(
+    String name, Object? arguments, Widget pageContent);
+typedef PageContentConvertRoute = Page<dynamic> Function(
+    String name, Object? arguments, Widget pageContent);
+
+typedef OnGeneratePushPageInterceptor = List<RoutePushInterceptor>? Function(
+    Route<dynamic> route);
+
+Page<T> _onPageContentConvertRoute<T>(
+        String name, Object? arguments, Widget page) =>
+    MaterialPage(child: page, name: name, arguments: arguments);
+
+Widget _pageContentWrapper<T>(String name, Object? arguments, Widget page) =>
+    page;
 
 class AnNavigator extends Navigator {
   const AnNavigator({
@@ -26,28 +40,26 @@ class AnNavigator extends Navigator {
     super.requestFocus = true,
     this.onGenerateRoutePage,
     this.onGeneratePushPageInterceptor,
-    this.onGenerateRoutePageWidget,
-    this.pageCreator,
-    this.onPageWidgetConvertRoute = _onPageWidgetConvertRoute,
+    this.pageContentCreator,
+    this.onGeneratePageContent,
+    this.onPageContentWrapper = _pageContentWrapper,
+    this.onPageContentConvertRoute = _onPageContentConvertRoute,
   });
 
   @override
   NavigatorState createState() => AnNavigatorState();
 
-  final Map<String, Widget Function(BuildContext context, Object? argments)>?
-      pageCreator;
+  final Map<String, PageContentCreator>? pageContentCreator;
+
+  final OnGeneratePageContent? onGeneratePageContent;
+
+  final PageContentWrapper onPageContentWrapper;
+
+  final PageContentConvertRoute onPageContentConvertRoute;
 
   final RoutePageFactory? onGenerateRoutePage;
 
-  final Widget? Function(String name, Object? arguments)?
-      onGenerateRoutePageWidget;
-
-  final Page<dynamic> Function(
-          Widget pageWidget, String name, Object? arguments)
-      onPageWidgetConvertRoute;
-
-  final List<RoutePushInterceptor>? Function(Route<dynamic> route)?
-      onGeneratePushPageInterceptor;
+  final OnGeneratePushPageInterceptor? onGeneratePushPageInterceptor;
 
   static NavigatorState of(BuildContext context,
           {bool rootNavigator = false}) =>
@@ -94,20 +106,34 @@ class AnNavigatorState extends NavigatorState
   }
 
   @override
-  Widget? generateRoutePageWidget<T>(String name, Object? arguments) {
-    if (widget.pageCreator != null && widget.pageCreator!.isNotEmpty) {
-      final builder = widget.pageCreator![name];
+  Widget? generateRoutePageContent<T>(String name, Object? arguments) {
+    Widget? pageContent;
+    if (widget.pageContentCreator != null &&
+        widget.pageContentCreator!.isNotEmpty) {
+      final builder = widget.pageContentCreator![name];
       if (builder != null) {
-        return Builder(builder: (context) => builder(context, arguments));
+        pageContent =
+            Builder(builder: (context) => builder(context, arguments));
       }
     }
-    return widget.onGenerateRoutePageWidget?.call(name, arguments);
+    pageContent ??= widget.onGeneratePageContent?.call(name, arguments);
+
+    if (pageContent != null) {
+      pageContent = wrapperPageContent(name, arguments, pageContent);
+    }
+
+    return pageContent;
+  }
+
+  Widget wrapperPageContent(
+      String name, Object? arguments, Widget pageContent) {
+    return widget.onPageContentWrapper(name, arguments, pageContent);
   }
 
   @override
-  Page<T?> convertPageWidgetToRoute<T>(
-      Widget pageWidget, String name, Object? arguments) {
-    return widget.onPageWidgetConvertRoute.call(pageWidget, name, arguments)
+  Page<T?> convertPageContentToRoute<T>(
+      String name, Object? arguments, Widget pageContent) {
+    return widget.onPageContentConvertRoute.call(name, arguments, pageContent)
         as Page<T?>;
   }
 

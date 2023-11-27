@@ -2,19 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 mixin CustomGenerateRoutePageNavigatorState on NavigatorState {
-  Widget? generateRoutePageWidget<T>(String name, Object? arguments);
+  Widget? generateRoutePageContent<T>(String name, Object? arguments);
 
-  Page<T?> convertPageWidgetToRoute<T>(
-      Widget pageWidget, String name, Object? arguments);
+  Page<T?> convertPageContentToRoute<T>(
+      String name, Object? arguments, Widget pageContent);
 
   Page<T?>? generateRoutePage<T>(String name, Object? arguments);
 
   RouteSettings _routeSettings(String name, Object? arguments) {
     RouteSettings? result;
 
-    final pw = generateRoutePageWidget(name, arguments);
+    final pw = generateRoutePageContent(name, arguments);
     if (pw != null) {
-      result = convertPageWidgetToRoute(pw, name, arguments);
+      result = convertPageContentToRoute(name, arguments, pw);
       assert(result.name == null, 'RouteSettings name must not null');
       return result;
     }
