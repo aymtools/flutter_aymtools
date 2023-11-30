@@ -1,3 +1,5 @@
+import 'dart:js';
+
 import 'package:flutter/material.dart';
 
 NullableIndexedWidgetBuilder _sliverChildBuilderDelegate(
@@ -28,8 +30,32 @@ class SliverChildSeparatedBuilderDelegate extends SliverChildBuilderDelegate {
     required NullableIndexedWidgetBuilder builder,
     required IndexedWidgetBuilder separatorBuilder,
     int? childCount,
+    super.addAutomaticKeepAlives,
+    super.addRepaintBoundaries,
+    super.addSemanticIndexes,
   }) : super(
           _sliverChildBuilderDelegate(builder, separatorBuilder),
           childCount: childCount == null ? null : childCount * 2 - 1,
         );
+}
+
+List<Widget> _sliverChildListDelegate(
+    List<Widget> children, IndexedWidgetBuilder separatorBuilder) {
+  List<Widget> result = [];
+  for (int i = 0; i < children.length; i++) {
+    result.add(children[i]);
+    result.add(Builder(builder: (context) => separatorBuilder(context, i)));
+  }
+  if (result.isNotEmpty) result.removeLast();
+  return result;
+}
+
+class SliverChildSeparatedListDelegate extends SliverChildListDelegate {
+  SliverChildSeparatedListDelegate(
+    List<Widget> children, {
+    required IndexedWidgetBuilder separatorBuilder,
+    super.addAutomaticKeepAlives,
+    super.addRepaintBoundaries,
+    super.addSemanticIndexes,
+  }) : super(_sliverChildListDelegate(children, separatorBuilder));
 }
