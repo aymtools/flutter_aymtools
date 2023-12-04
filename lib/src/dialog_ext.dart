@@ -18,10 +18,7 @@ Future<T?> showCDialog<T>({
   TraversalEdgeBehavior? traversalEdgeBehavior,
 }) {
   assert(debugCheckHasMaterialLocalizations(context));
-  cancellable = cancellable?.makeCancellable(infectious: true);
-  if (cancellable?.isUnavailable == true) {
-    return Future.value(null);
-  }
+
   final navigator = Navigator.of(context, rootNavigator: useRootNavigator);
 
   final CapturedThemes themes = InheritedTheme.capture(
@@ -42,9 +39,7 @@ Future<T?> showCDialog<T>({
     traversalEdgeBehavior:
         traversalEdgeBehavior ?? TraversalEdgeBehavior.closedLoop,
   );
-  cancellable?.onCancel.then((value) => route.navigator?.removeRoute(route));
-
-  return navigator.push<T>(route).whenComplete(() => cancellable?.release());
+  return navigator.pushC(route, cancellable);
 }
 
 Future<T?> showCCupertinoDialog<T>({
@@ -57,10 +52,6 @@ Future<T?> showCCupertinoDialog<T>({
   RouteSettings? routeSettings,
   Offset? anchorPoint,
 }) {
-  cancellable = cancellable?.makeCancellable(infectious: true);
-  if (cancellable?.isUnavailable == true) {
-    return Future.value(null);
-  }
   final navigator = Navigator.of(context, rootNavigator: useRootNavigator);
 
   final route = CupertinoDialogRoute<T>(
@@ -73,8 +64,7 @@ Future<T?> showCCupertinoDialog<T>({
     settings: routeSettings,
     anchorPoint: anchorPoint,
   );
-  cancellable?.onCancel.then((value) => route.navigator?.removeRoute(route));
-  return navigator.push<T>(route).whenComplete(() => cancellable?.release());
+  return navigator.pushC(route, cancellable);
 }
 
 Future<T?> showCGeneralDialog<T extends Object?>({
@@ -92,10 +82,6 @@ Future<T?> showCGeneralDialog<T extends Object?>({
 }) {
   assert(!barrierDismissible || barrierLabel != null);
 
-  cancellable = cancellable?.makeCancellable(infectious: true);
-  if (cancellable?.isUnavailable == true) {
-    return Future.value(null);
-  }
   final navigator = Navigator.of(context, rootNavigator: useRootNavigator);
   final route = RawDialogRoute<T>(
     pageBuilder: pageBuilder,
@@ -107,8 +93,7 @@ Future<T?> showCGeneralDialog<T extends Object?>({
     settings: routeSettings,
     anchorPoint: anchorPoint,
   );
-  cancellable?.onCancel.then((value) => route.navigator?.removeRoute(route));
-  return navigator.push<T>(route).whenComplete(() => cancellable?.release());
+  return navigator.pushC(route, cancellable);
 }
 
 Future<T?> showCModalBottomSheet<T>({
@@ -133,10 +118,6 @@ Future<T?> showCModalBottomSheet<T>({
 }) {
   assert(debugCheckHasMediaQuery(context));
   assert(debugCheckHasMaterialLocalizations(context));
-  cancellable = cancellable?.makeCancellable(infectious: true);
-  if (cancellable?.isUnavailable == true) {
-    return Future.value(null);
-  }
   final NavigatorState navigator =
       Navigator.of(context, rootNavigator: useRootNavigator);
   final MaterialLocalizations localizations = MaterialLocalizations.of(context);
@@ -164,8 +145,7 @@ Future<T?> showCModalBottomSheet<T>({
     anchorPoint: anchorPoint,
     useSafeArea: useSafeArea,
   );
-  cancellable?.onCancel.then((value) => route.navigator?.removeRoute(route));
-  return navigator.push(route).whenComplete(() => cancellable?.release());
+  return navigator.pushC(route, cancellable);
 }
 
 PersistentBottomSheetController<T> showCBottomSheet<T>({
@@ -181,8 +161,6 @@ PersistentBottomSheetController<T> showCBottomSheet<T>({
   AnimationController? transitionAnimationController,
 }) {
   assert(debugCheckHasScaffold(context));
-  assert(
-      cancellable == null || cancellable.isAvailable, 'cancellable cannot use');
 
   final result = Scaffold.of(context).showBottomSheet<T>(
     builder,
@@ -194,8 +172,16 @@ PersistentBottomSheetController<T> showCBottomSheet<T>({
     enableDrag: enableDrag,
     transitionAnimationController: transitionAnimationController,
   );
-  result.closed.then((value) => cancellable?.release());
-  cancellable?.onCancel.then((value) => result.close());
+  if (cancellable != null) {
+    final Cancellable showing = Cancellable();
+
+    cancellable.onCancel
+        .bindCancellable(showing)
+        .then((value) => result.close());
+    showing.onCancel.then((value) => cancellable.cancel());
+
+    result.closed.then((value) => showing.cancel());
+  }
   return result;
 }
 
@@ -241,10 +227,6 @@ Future<T?> showCCupertinoModalPopup<T>({
   RouteSettings? routeSettings,
   Offset? anchorPoint,
 }) {
-  cancellable = cancellable?.makeCancellable(infectious: true);
-  if (cancellable?.isUnavailable == true) {
-    return Future.value(null);
-  }
   final NavigatorState navigator =
       Navigator.of(context, rootNavigator: useRootNavigator);
 
@@ -257,8 +239,7 @@ Future<T?> showCCupertinoModalPopup<T>({
     settings: routeSettings,
     anchorPoint: anchorPoint,
   );
-  cancellable?.onCancel.then((value) => route.navigator?.removeRoute(route));
-  return navigator.push(route).whenComplete(() => cancellable?.release());
+  return navigator.pushC(route, cancellable);
 }
 
 void showCLicensePage({
@@ -270,10 +251,6 @@ void showCLicensePage({
   String? applicationLegalese,
   bool useRootNavigator = false,
 }) {
-  cancellable = cancellable?.makeCancellable(infectious: true);
-  if (cancellable?.isUnavailable == true) {
-    return;
-  }
   final NavigatorState navigator =
       Navigator.of(context, rootNavigator: useRootNavigator);
   final route = MaterialPageRoute<void>(
@@ -284,6 +261,24 @@ void showCLicensePage({
       applicationLegalese: applicationLegalese,
     ),
   );
-  cancellable?.onCancel.then((value) => route.navigator?.removeRoute(route));
-  navigator.push(route).whenComplete(() => cancellable?.release());
+  navigator.pushC(route, cancellable);
+}
+
+extension _PushCancellableRouteExt on NavigatorState {
+  Future<T?> pushC<T extends Object?>(
+      Route<T> route, Cancellable? cancellable) {
+    if (cancellable == null) return push<T>(route);
+    if (cancellable.isUnavailable == true) {
+      return Future.value(null);
+    }
+
+    final Cancellable showing = Cancellable();
+
+    cancellable.onCancel
+        .bindCancellable(showing)
+        .then((value) => route.navigator?.removeRoute(route));
+    showing.bindCancellable(cancellable);
+
+    return push<T>(route).whenComplete(() => showing.cancel());
+  }
 }

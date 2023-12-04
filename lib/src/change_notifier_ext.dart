@@ -33,7 +33,7 @@ extension ListenableCancellable on Listenable {
     cancellable.whenCancel.then((value) => removeListener(notifierCallback));
   }
 
-  void addCSListener(Cancellable cancellable, VoidCallback listener) {
+  void addCSingleListener(Cancellable cancellable, VoidCallback listener) {
     if (cancellable.isUnavailable) return;
 
     final sl = _singleListener.getOrPut(this, defaultValue: () {
@@ -70,7 +70,7 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
     cancellable.whenCancel.then((value) => removeListener(notifierCallback));
   }
 
-  void addCSVListener(
+  void addCSingleVListener(
       Cancellable cancellable, void Function(T value) listener) {
     if (cancellable.isUnavailable) return;
 
@@ -138,7 +138,7 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
     if (cancellable == null || cancellable.isAvailable) {
       Cancellable c =
           cancellable?.makeCancellable(infectious: true) ?? Cancellable();
-      addCSVListener(c, (value) {
+      addCSingleVListener(c, (value) {
         final v = value;
         if (test(v)) {
           completer.complete(v);
