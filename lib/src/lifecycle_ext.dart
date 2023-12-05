@@ -9,6 +9,14 @@ extension LifecycleObserverRegisterX on LifecycleObserverRegister {
       currentLifecycleState >= LifecycleState.started
           ? Future.value(currentLifecycleState)
           : nextLifecycleState(LifecycleState.started);
+
+  Future<LifecycleEvent> whenFirstStart() =>
+      whenMoreThanState(LifecycleState.started)
+          .then((value) => LifecycleEvent.start);
+
+  Future<LifecycleEvent> whenFirstResume() =>
+      whenMoreThanState(LifecycleState.resumed)
+          .then((value) => LifecycleEvent.resume);
 }
 
 extension LifecycleObserverRegisterMixinContextExt

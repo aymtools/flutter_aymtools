@@ -14,7 +14,7 @@ dependencies:
   async: ^2.9.0
   cancellable: ^1.1.2
   weak_collections: ^1.0.0
-  anlifecycle: ^1.0.2
+  anlifecycle: ^1.0.3
 
 dev_dependencies:
   flutter_test:
