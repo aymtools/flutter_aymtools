@@ -40,6 +40,43 @@ class ColumnSeparated extends Column {
             children: separatorBuilder == null
                 ? children
                 : _childList(children, separatorBuilder));
+
+  ColumnSeparated.separatorWidget({
+    super.key,
+    super.mainAxisAlignment,
+    super.mainAxisSize,
+    super.crossAxisAlignment,
+    super.textDirection,
+    super.verticalDirection,
+    super.textBaseline,
+    Widget? separator,
+    List<Widget> children = const [],
+  }) : super(
+            children: separator == null
+                ? children
+                : _childList(children, (_, __) => separator));
+
+  ColumnSeparated.separatorSize({
+    super.key,
+    super.mainAxisAlignment,
+    super.mainAxisSize,
+    super.crossAxisAlignment,
+    super.textDirection,
+    super.verticalDirection,
+    super.textBaseline,
+    double? separatorSize,
+    List<Widget> children = const [],
+  }) : super(
+          children: separatorSize == null || separatorSize <= 0
+              ? children
+              : _childList(
+                  children,
+                  (_, __) => SizedBox(
+                    height: separatorSize,
+                    // width: double.infinity,
+                  ),
+                ),
+        );
 }
 
 class RowSeparated extends Row {
@@ -57,4 +94,41 @@ class RowSeparated extends Row {
             children: separatorBuilder == null
                 ? children
                 : _childList(children, separatorBuilder));
+
+  RowSeparated.separatorWidget({
+    super.key,
+    super.mainAxisAlignment,
+    super.mainAxisSize,
+    super.crossAxisAlignment,
+    super.textDirection,
+    super.verticalDirection,
+    super.textBaseline,
+    Widget? separator,
+    List<Widget> children = const [],
+  }) : super(
+            children: separator == null
+                ? children
+                : _childList(children, (_, __) => separator));
+
+  RowSeparated.separatorSize({
+    super.key,
+    super.mainAxisAlignment,
+    super.mainAxisSize,
+    super.crossAxisAlignment,
+    super.textDirection,
+    super.verticalDirection,
+    super.textBaseline,
+    double? separatorSize,
+    List<Widget> children = const [],
+  }) : super(
+          children: separatorSize == null || separatorSize <= 0
+              ? children
+              : _childList(
+                  children,
+                  (_, __) => SizedBox(
+                    width: separatorSize,
+                    // height: double.infinity,
+                  ),
+                ),
+        );
 }
