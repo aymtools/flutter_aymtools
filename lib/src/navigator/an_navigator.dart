@@ -29,7 +29,7 @@ class AnNavigator extends Navigator {
     super.onPopPage,
     super.transitionDelegate = const DefaultTransitionDelegate<dynamic>(),
     super.initialRoute,
-    super.onGenerateRoute,
+    RouteFactory? onGenerateRoute,
     super.onUnknownRoute,
     super.observers = const <NavigatorObserver>[],
     super.restorationScopeId,
@@ -44,7 +44,10 @@ class AnNavigator extends Navigator {
     this.onGeneratePageContent,
     this.onPageContentWrapper = _pageContentWrapper,
     this.onPageContentConvertRoute = _onPageContentConvertRoute,
-  });
+  })  : _onGenerateRoute = onGenerateRoute,
+        assert(key is GlobalKey),
+        _navigatorKey = key as GlobalKey<NavigatorState>,
+        super(onGenerateRoute: null);
 
   @override
   NavigatorState createState() => AnNavigatorState();
@@ -60,6 +63,9 @@ class AnNavigator extends Navigator {
   final RoutePageFactory? onGenerateRoutePage;
 
   final OnGeneratePushPageInterceptor? onGeneratePushPageInterceptor;
+  final RouteFactory? _onGenerateRoute;
+
+  final GlobalKey<NavigatorState> _navigatorKey;
 
   static NavigatorState of(BuildContext context,
           {bool rootNavigator = false}) =>
@@ -93,49 +99,87 @@ class AnNavigator extends Navigator {
     }());
     return navigator!;
   }
+
+  @override
+  RouteFactory? get onGenerateRoute {
+    return (RouteSettings settings) {
+      String name = settings.name!;
+      Object? arguments = settings.arguments;
+      Widget? pageContent;
+      if (pageContentCreator != null && pageContentCreator!.isNotEmpty) {
+        final builder = pageContentCreator![name];
+        if (builder != null) {
+          pageContent =
+              Builder(builder: (context) => builder(context, arguments));
+        }
+      }
+      pageContent ??= onGeneratePageContent?.call(name, arguments);
+
+      if (pageContent != null) {
+        pageContent = onPageContentWrapper(name, arguments, pageContent);
+      }
+      final BuildContext navigatorStateContext =
+          _navigatorKey.currentState!.context;
+
+      if (pageContent != null) {
+        return onPageContentConvertRoute
+            .call(name, arguments, pageContent)
+            .createRoute(navigatorStateContext);
+      }
+      if (onGenerateRoutePage != null) {
+        final page = onGenerateRoutePage!(name, arguments);
+        if (page != null) {
+          return page.createRoute(navigatorStateContext);
+        }
+      }
+      if (_onGenerateRoute != null) {
+        return _onGenerateRoute!(settings);
+      }
+      return null;
+    };
+  }
 }
 
-class AnNavigatorState extends NavigatorState
-    with CustomGenerateRoutePageNavigatorState, InterceptorNavigatorState {
+class AnNavigatorState extends NavigatorState with InterceptorNavigatorState {
   @override
   AnNavigator get widget => super.widget as AnNavigator;
-
-  @override
-  Page<T?>? generateRoutePage<T>(String name, Object? arguments) {
-    return widget.onGenerateRoutePage?.call(name, arguments) as Page<T?>?;
-  }
-
-  @override
-  Widget? generateRoutePageContent<T>(String name, Object? arguments) {
-    Widget? pageContent;
-    if (widget.pageContentCreator != null &&
-        widget.pageContentCreator!.isNotEmpty) {
-      final builder = widget.pageContentCreator![name];
-      if (builder != null) {
-        pageContent =
-            Builder(builder: (context) => builder(context, arguments));
-      }
-    }
-    pageContent ??= widget.onGeneratePageContent?.call(name, arguments);
-
-    if (pageContent != null) {
-      pageContent = wrapperPageContent(name, arguments, pageContent);
-    }
-
-    return pageContent;
-  }
-
-  Widget wrapperPageContent(
-      String name, Object? arguments, Widget pageContent) {
-    return widget.onPageContentWrapper(name, arguments, pageContent);
-  }
-
-  @override
-  Page<T?> convertPageContentToRoute<T>(
-      String name, Object? arguments, Widget pageContent) {
-    return widget.onPageContentConvertRoute.call(name, arguments, pageContent)
-        as Page<T?>;
-  }
+  //
+  // @override
+  // Page<T?>? generateRoutePage<T>(String name, Object? arguments) {
+  //   return widget.onGenerateRoutePage?.call(name, arguments) as Page<T?>?;
+  // }
+  //
+  // @override
+  // Widget? generateRoutePageContent<T>(String name, Object? arguments) {
+  //   Widget? pageContent;
+  //   if (widget.pageContentCreator != null &&
+  //       widget.pageContentCreator!.isNotEmpty) {
+  //     final builder = widget.pageContentCreator![name];
+  //     if (builder != null) {
+  //       pageContent =
+  //           Builder(builder: (context) => builder(context, arguments));
+  //     }
+  //   }
+  //   pageContent ??= widget.onGeneratePageContent?.call(name, arguments);
+  //
+  //   if (pageContent != null) {
+  //     pageContent = wrapperPageContent(name, arguments, pageContent);
+  //   }
+  //
+  //   return pageContent;
+  // }
+  //
+  // Widget wrapperPageContent(
+  //     String name, Object? arguments, Widget pageContent) {
+  //   return widget.onPageContentWrapper(name, arguments, pageContent);
+  // }
+  //
+  // @override
+  // Page<T?> convertPageContentToRoute<T>(
+  //     String name, Object? arguments, Widget pageContent) {
+  //   return widget.onPageContentConvertRoute.call(name, arguments, pageContent)
+  //       as Page<T?>;
+  // }
 
   @override
   List<RoutePushInterceptor>? generatePushPageInterceptor(Route route) {
