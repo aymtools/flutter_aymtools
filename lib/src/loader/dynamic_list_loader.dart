@@ -5,8 +5,8 @@ import 'package:cancellable/cancellable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/scheduler.dart';
 
-import 'stream_ext.dart';
-import 'widget_ext.dart';
+import '../tools/stream_ext.dart';
+import '../widgets/widget_ext.dart';
 
 typedef OnDynamicLoadedNotifier<T> = void Function(T data);
 

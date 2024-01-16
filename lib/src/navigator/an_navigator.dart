@@ -33,8 +33,7 @@ class AnNavigator extends Navigator {
     super.onUnknownRoute,
     super.observers = const <NavigatorObserver>[],
     super.restorationScopeId,
-    super.onGenerateInitialRoutes =
-        CustomGenerateRoutePageNavigatorState.defaultGenerateInitialRoutes,
+    super.onGenerateInitialRoutes,
     super.reportsRouteUpdateToEngine = false,
     super.clipBehavior = Clip.hardEdge,
     super.requestFocus = true,
@@ -143,6 +142,7 @@ class AnNavigator extends Navigator {
 class AnNavigatorState extends NavigatorState with InterceptorNavigatorState {
   @override
   AnNavigator get widget => super.widget as AnNavigator;
+
   //
   // @override
   // Page<T?>? generateRoutePage<T>(String name, Object? arguments) {

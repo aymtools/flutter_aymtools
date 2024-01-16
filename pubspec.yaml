@@ -1,6 +1,6 @@
 name: aymtools
 description: A common scaffolding for rapid development of flutter.
-version: 0.0.1
+version: 1.0.0
 homepage: https://github.com/aymtools/flutter_aymtools/
 
 environment:
@@ -12,9 +12,10 @@ dependencies:
     sdk: flutter
 
   async: ^2.9.0
-  cancellable: ^1.1.2
-  weak_collections: ^1.0.0
-  anlifecycle: ^1.0.3
+  cancellable: ^1.1.4
+  weak_collections: ^1.1.0
+  anlifecycle: ^1.0.5
+  isolate_pool_executor: ^1.1.1
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-import 'package:aymtools/src/element_ext.dart';
+import 'package:aymtools/src/tools/element_ext.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/material.dart';
 

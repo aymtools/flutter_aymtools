@@ -1,8 +1,12 @@
+import 'package:anlifecycle/anlifecycle.dart';
+import 'package:aymtools/src/lifecycle/lifecycle_ext.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/widgets.dart';
 
 mixin CancellableState<W extends StatefulWidget> on State<W> {
-  final Cancellable _base = Cancellable();
+  late final Cancellable _base = this is LifecycleObserverRegisterMixin
+      ? (this as LifecycleObserverRegisterMixin).makeLiveCancellable()
+      : Cancellable();
 
   Cancellable makeCancellable({Cancellable? father, bool infectious = false}) =>
       _base.makeCancellable(father: father, infectious: infectious);

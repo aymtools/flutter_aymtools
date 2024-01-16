@@ -55,8 +55,8 @@ class _CacheMapObserver with LifecycleEventDefaultObserver {
 
 extension LifecycleObserverRegisterCacnellable on LifecycleObserverRegister {
   Cancellable makeLiveCancellable({Cancellable? other}) {
-    assert(currentLifecycleState > LifecycleState.destroyed,
-        '必须在created后且非destroyed之前使用');
+    assert(
+        currentLifecycleState > LifecycleState.destroyed, '必须在destroyed之前使用');
     return _map
         .putIfAbsent(this, () => _CacheMapObserver(this))
         ._makeCancellableForLive(other: other);
