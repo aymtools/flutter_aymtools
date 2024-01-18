@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:aymtools/src/dialog/navigator_ext.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +40,7 @@ Future<T?> showCDialog<T>({
     traversalEdgeBehavior:
         traversalEdgeBehavior ?? TraversalEdgeBehavior.closedLoop,
   );
-  return navigator.pushC(route, cancellable);
+  return navigator.pushCancellableRoute(route, cancellable);
 }
 
 Future<T?> showCCupertinoDialog<T>({
@@ -64,7 +65,7 @@ Future<T?> showCCupertinoDialog<T>({
     settings: routeSettings,
     anchorPoint: anchorPoint,
   );
-  return navigator.pushC(route, cancellable);
+  return navigator.pushCancellableRoute(route, cancellable);
 }
 
 Future<T?> showCGeneralDialog<T extends Object?>({
@@ -93,7 +94,7 @@ Future<T?> showCGeneralDialog<T extends Object?>({
     settings: routeSettings,
     anchorPoint: anchorPoint,
   );
-  return navigator.pushC(route, cancellable);
+  return navigator.pushCancellableRoute(route, cancellable);
 }
 
 Future<T?> showCModalBottomSheet<T>({
@@ -145,7 +146,7 @@ Future<T?> showCModalBottomSheet<T>({
     anchorPoint: anchorPoint,
     useSafeArea: useSafeArea,
   );
-  return navigator.pushC(route, cancellable);
+  return navigator.pushCancellableRoute(route, cancellable);
 }
 
 PersistentBottomSheetController<T> showCBottomSheet<T>({
@@ -239,7 +240,7 @@ Future<T?> showCCupertinoModalPopup<T>({
     settings: routeSettings,
     anchorPoint: anchorPoint,
   );
-  return navigator.pushC(route, cancellable);
+  return navigator.pushCancellableRoute(route, cancellable);
 }
 
 void showCLicensePage({
@@ -261,24 +262,6 @@ void showCLicensePage({
       applicationLegalese: applicationLegalese,
     ),
   );
-  navigator.pushC(route, cancellable);
+  navigator.pushCancellableRoute(route, cancellable);
 }
 
-extension _PushCancellableRouteExt on NavigatorState {
-  Future<T?> pushC<T extends Object?>(
-      Route<T> route, Cancellable? cancellable) {
-    if (cancellable == null) return push<T>(route);
-    if (cancellable.isUnavailable == true) {
-      return Future.value(null);
-    }
-
-    final Cancellable showing = Cancellable();
-
-    cancellable.onCancel
-        .bindCancellable(showing)
-        .then((value) => route.navigator?.removeRoute(route));
-    showing.bindCancellable(cancellable);
-
-    return push<T>(route).whenComplete(() => showing.cancel());
-  }
-}

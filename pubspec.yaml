@@ -12,6 +12,11 @@ dependencies:
     sdk: flutter
 
   async: ^2.9.0
+  shared_preferences: ^2.1.1
+  intl: ^0.18.1
+  linked_scroll_controller: ^0.2.0
+  collection: ^1.17.0
+
   cancellable: ^1.1.4
   weak_collections: ^1.1.0
   anlifecycle: ^1.0.5
