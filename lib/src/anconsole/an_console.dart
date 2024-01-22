@@ -23,8 +23,6 @@ class AnConsole {
     _AnConsoleOverlay.pop(context);
   }
 
-  bool _isCreatedObserver = false;
-
   final List<_ConsoleRoute> _console = [];
   final List<RoutePredicate> _doNotShowUp = [];
 
@@ -33,7 +31,6 @@ class AnConsole {
   AnConsoleObserver get navigatorObserver {
     if (_navigatorObserver == null) {
       AnConsoleObserver observer = AnConsoleObserver.instance;
-      _isCreatedObserver = true;
       _console.forEach(observer._addConsole);
       observer._fitter.addAll(_doNotShowUp);
       _navigatorObserver = observer;
