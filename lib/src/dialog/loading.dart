@@ -24,8 +24,11 @@ class LoadingDialog {
       return;
     }
     _cancellable = CancellableEvery();
-    assert(WidgetsBinding.instance.rootElement != null);
-    final navigator = WidgetsBinding.instance.rootElement
+    // assert(WidgetsBinding.instance.rootElement != null);
+    // final navigator = WidgetsBinding.instance.rootElement
+    //     ?.findStateForChildren<NavigatorState>();
+    assert(WidgetsBinding.instance.renderViewElement != null);
+    final navigator = WidgetsBinding.instance.renderViewElement
         ?.findStateForChildren<NavigatorState>();
     navigator?.showDialog(
         builder: _builder!, cancellable: _cancellable?.asCancellable());

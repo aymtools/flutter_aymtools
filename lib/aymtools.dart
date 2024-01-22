@@ -1,6 +1,7 @@
 library aymtools;
 
 export 'src/anconsole/an_console.dart';
+export 'src/anconsole/events.dart';
 export 'src/dialog/context_ext.dart';
 export 'src/dialog/dialog_ext.dart';
 export 'src/dialog/loading.dart';

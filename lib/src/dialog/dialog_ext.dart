@@ -16,7 +16,7 @@ Future<T?> showCDialog<T>({
   bool useRootNavigator = true,
   RouteSettings? routeSettings,
   Offset? anchorPoint,
-  TraversalEdgeBehavior? traversalEdgeBehavior,
+  // TraversalEdgeBehavior? traversalEdgeBehavior,
 }) {
   assert(debugCheckHasMaterialLocalizations(context));
 
@@ -37,8 +37,8 @@ Future<T?> showCDialog<T>({
     settings: routeSettings,
     themes: themes,
     anchorPoint: anchorPoint,
-    traversalEdgeBehavior:
-        traversalEdgeBehavior ?? TraversalEdgeBehavior.closedLoop,
+    // traversalEdgeBehavior:
+    //     traversalEdgeBehavior ?? TraversalEdgeBehavior.closedLoop,
   );
   return navigator.pushCancellableRoute(route, cancellable);
 }
@@ -128,9 +128,9 @@ Future<T?> showCModalBottomSheet<T>({
     capturedThemes:
         InheritedTheme.capture(from: context, to: navigator.context),
     isScrollControlled: isScrollControlled,
-    barrierLabel: localizations.scrimLabel,
-    barrierOnTapHint:
-        localizations.scrimOnTapHint(localizations.bottomSheetLabel),
+    // barrierLabel: localizations.scrimLabel,
+    // barrierOnTapHint:
+    //     localizations.scrimOnTapHint(localizations.bottomSheetLabel),
     backgroundColor: backgroundColor,
     elevation: elevation,
     shape: shape,
@@ -140,7 +140,7 @@ Future<T?> showCModalBottomSheet<T>({
     modalBarrierColor:
         barrierColor ?? Theme.of(context).bottomSheetTheme.modalBarrierColor,
     enableDrag: enableDrag,
-    showDragHandle: showDragHandle,
+    // showDragHandle: showDragHandle,
     settings: routeSettings,
     transitionAnimationController: transitionAnimationController,
     anchorPoint: anchorPoint,

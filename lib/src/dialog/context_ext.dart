@@ -16,7 +16,7 @@ extension BuildContextDialogCancellable on BuildContext {
     bool useRootNavigator = true,
     RouteSettings? routeSettings,
     Offset? anchorPoint,
-    TraversalEdgeBehavior? traversalEdgeBehavior,
+    // TraversalEdgeBehavior? traversalEdgeBehavior,
   }) =>
       d.showCDialog(
         builder: builder,
@@ -29,7 +29,7 @@ extension BuildContextDialogCancellable on BuildContext {
         useRootNavigator: useRootNavigator,
         routeSettings: routeSettings,
         anchorPoint: anchorPoint,
-        traversalEdgeBehavior: traversalEdgeBehavior,
+        // traversalEdgeBehavior: traversalEdgeBehavior,
       );
 
   Future<T?> showCCupertinoDialog<T>({

@@ -29,7 +29,7 @@ extension NavigatorCancellableRoute on NavigatorState {
     bool useRootNavigator = true,
     RouteSettings? routeSettings,
     Offset? anchorPoint,
-    TraversalEdgeBehavior? traversalEdgeBehavior,
+    // TraversalEdgeBehavior? traversalEdgeBehavior,
   }) {
     assert(debugCheckHasMaterialLocalizations(context));
 
@@ -48,8 +48,8 @@ extension NavigatorCancellableRoute on NavigatorState {
       settings: routeSettings,
       themes: themes,
       anchorPoint: anchorPoint,
-      traversalEdgeBehavior:
-          traversalEdgeBehavior ?? TraversalEdgeBehavior.closedLoop,
+      // traversalEdgeBehavior:
+      //     traversalEdgeBehavior ?? TraversalEdgeBehavior.closedLoop,
     );
     return pushCancellableRoute(route, cancellable);
   }

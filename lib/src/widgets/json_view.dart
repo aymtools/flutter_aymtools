@@ -34,10 +34,13 @@ enum NodeType {
 
 int _maxLevel = -1;
 
-JsonNodes _start(dynamic json) {
+JsonNodes _parsing(dynamic json) {
   List<Node> result = [];
   _maxLevel = 0;
-  if (isPrimitive(json)) {
+  if (json is String &&
+      (json.trim().startsWith('{') || json.trim().startsWith('['))) {
+    return _parsing(jsonDecode(json));
+  } else if (isPrimitive(json)) {
     result.add(Node(_maxLevel, NodeType.value, json));
   } else if (json is List) {
     result.add(Node(_maxLevel, NodeType.listStart, json));
@@ -105,7 +108,14 @@ bool isPrimitive(dynamic value) {
   return value is double || value is int || value is String || value is bool;
 }
 
+Future<JsonNodes> _defJsonParser(
+        json, JsonNodes Function(dynamic json) parsing) =>
+    compute(parsing, json);
+
 class JsonView extends StatefulWidget {
+  static Future<JsonNodes> Function(
+      dynamic, JsonNodes Function(dynamic) parsing) jsonParser = _defJsonParser;
+
   final String json;
 
   const JsonView({super.key, required this.json});
@@ -132,11 +142,7 @@ class _JsonViewState extends State<JsonView> with CancellableState {
     if (jsonStr == this.jsonStr) return;
     parseJsonCancellable?.cancel();
     parseJsonCancellable = makeCancellable();
-    jsonNodes = compute<String, JsonNodes>((jsonStr) async {
-      final json = jsonDecode(jsonStr);
-      _maxLevel = -1;
-      return _start(json);
-    }, jsonStr)
+    jsonNodes = JsonView.jsonParser(jsonStr, _parsing)
         .bindCancellable(parseJsonCancellable!);
     setState(() {});
   }
@@ -157,7 +163,7 @@ class _JsonViewState extends State<JsonView> with CancellableState {
             return _buildJsonV(data);
             // return JsonView.map(snapshot.data!);
           } else {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
         });
     return Scaffold(
@@ -174,7 +180,7 @@ class _JsonViewState extends State<JsonView> with CancellableState {
         Widget result;
         switch (node.type) {
           case NodeType.listStart:
-            result = Text('[');
+            result = const Text('[');
             break;
           case NodeType.listIndex:
             MapEntry<int, dynamic> data = node.value;
@@ -183,20 +189,20 @@ class _JsonViewState extends State<JsonView> with CancellableState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('[${data.key}]'),
-                Text(' : '),
+                const Text(' : '),
                 if (isPrimitive(value))
                   Expanded(
                       child: Text(value is String ? '"$value"' : '$value')),
-                if (value is Map) Text('{'),
-                if (value is List) Text('['),
+                if (value is Map) const Text('{'),
+                if (value is List) const Text('['),
               ],
             );
             break;
           case NodeType.listEnd:
-            result = Text(']');
+            result = const Text(']');
             break;
           case NodeType.mapStart:
-            result = Text('{');
+            result = const Text('{');
             break;
           case NodeType.mapKey:
             MapEntry<String, dynamic> data = node.value;
@@ -205,7 +211,7 @@ class _JsonViewState extends State<JsonView> with CancellableState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('"${data.key}"'),
-                Text(' : '),
+                const Text(' : '),
                 if (isPrimitive(value))
                   Expanded(
                       child: Text(value is String ? '"$value"' : '$value')),
@@ -215,7 +221,7 @@ class _JsonViewState extends State<JsonView> with CancellableState {
             );
             break;
           case NodeType.mapEnd:
-            result = Text('}');
+            result = const Text('}');
             break;
           case NodeType.value:
             final value = node.value;
@@ -225,15 +231,11 @@ class _JsonViewState extends State<JsonView> with CancellableState {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           controller: _controllers.addAndGet(),
-          child: SafeArea(
-            top: false,
-            bottom: false,
-            child: SizedBox(
-              width: maxLevel * 12 + defWidth,
-              child: Padding(
-                padding: EdgeInsets.only(left: 12.0 * node.level),
-                child: result,
-              ),
+          child: SizedBox(
+            width: maxLevel * 12 + defWidth,
+            child: Padding(
+              padding: EdgeInsets.only(left: 12.0 * node.level),
+              child: result,
             ),
           ),
         );

@@ -147,7 +147,7 @@ class ToastManager {
   }
 
   OverlayState? _findOverlayState() {
-    final rootElement = WidgetsBinding.instance.rootElement;
+    final rootElement = WidgetsBinding.instance.renderViewElement;
     if (rootElement != null) {
       NavigatorState? navigator = rootElement.findStateForChildren();
       if (navigator != null && navigator.mounted) {
