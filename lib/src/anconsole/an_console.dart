@@ -28,20 +28,28 @@ class AnConsole {
   final List<_ConsoleRoute> _console = [];
   final List<RoutePredicate> _doNotShowUp = [];
 
-  late final AnConsoleObserver navigatorObserver = () {
-    AnConsoleObserver observer = AnConsoleObserver.instance;
-    _isCreatedObserver = true;
-    _console.forEach(observer._addConsole);
-    observer._fitter.addAll(_doNotShowUp);
-    return observer;
-  }();
+  AnConsoleObserver? _navigatorObserver;
+
+  AnConsoleObserver get navigatorObserver {
+    if (_navigatorObserver == null) {
+      AnConsoleObserver observer = AnConsoleObserver.instance;
+      _isCreatedObserver = true;
+      _console.forEach(observer._addConsole);
+      observer._fitter.addAll(_doNotShowUp);
+      _navigatorObserver = observer;
+    }
+    return _navigatorObserver!;
+  }
 
   void addConsole(String title, Widget content) {
-    _console.add(_ConsoleRoute(title, content));
+    final route = _ConsoleRoute(title, content);
+    _console.add(route);
+    _navigatorObserver?._addConsole(route);
   }
 
   void addNotShowUpRoute(RoutePredicate predicate) {
     _doNotShowUp.add(predicate);
+    _navigatorObserver?._fitter.add(predicate);
   }
 }
 
