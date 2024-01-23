@@ -116,7 +116,7 @@ class JsonView extends StatefulWidget {
   static Future<JsonNodes> Function(
       dynamic, JsonNodes Function(dynamic) parsing) jsonParser = _defJsonParser;
 
-  final String json;
+  final dynamic json;
 
   const JsonView({super.key, required this.json});
 
@@ -138,8 +138,8 @@ class _JsonViewState extends State<JsonView> with CancellableState {
     _parseJson(widget.json);
   }
 
-  _parseJson(String jsonStr) {
-    if (jsonStr == this.jsonStr) return;
+  _parseJson(dynamic jsonStr) {
+    if (jsonStr == null || jsonStr == this.jsonStr) return;
     parseJsonCancellable?.cancel();
     parseJsonCancellable = makeCancellable();
     jsonNodes = JsonView.jsonParser(jsonStr, _parsing)

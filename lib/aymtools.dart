@@ -13,6 +13,7 @@ export 'src/loader/sliver_load_more.dart';
 export 'src/loader/dynamic_list_loader.dart';
 
 export 'src/navigator/an_navigator.dart';
+
 // export 'src/navigator/custom_generate_route_navigator.dart';
 export 'src/navigator/interceptor_navigator.dart';
 export 'src/navigator/an_navigator_ext.dart';
@@ -29,5 +30,6 @@ export 'src/tools/never_future.dart';
 export 'src/widgets/json_view.dart';
 export 'src/widgets/widget_ext.dart';
 export 'src/widgets/sliver_ext.dart';
+export 'src/widgets/change_notifier_builder.dart';
 
 export 'src/isolate/compute_ext.dart';

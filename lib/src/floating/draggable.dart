@@ -37,8 +37,9 @@ class _FloatingDraggableButtonState extends State<FloatingDraggableButton> {
   @override
   void initState() {
     super.initState();
+    _offset = widget.initOffset ?? Offset.zero;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    void initMax() {
       try {
         final parentSize = WidgetsBinding.instance.renderView.size;
         final currSize = _key.currentContext?.size;
@@ -46,30 +47,34 @@ class _FloatingDraggableButtonState extends State<FloatingDraggableButton> {
             ? Offset(parentSize.width, parentSize.height)
             : Offset(parentSize.width - currSize.width,
                 parentSize.height - currSize.height);
+        if (_offset == Offset.zero &&
+            widget.initOffset == null &&
+            currSize != null) {
+          final paddingRight = MediaQuery.of(context).padding.right;
+          _offset = Offset(parentSize.width - currSize.width - paddingRight,
+              parentSize.height * 3 / 5);
+        }
         setState(() {
           _maxOffset = size;
         });
       } catch (e, st) {}
-    });
-    if (widget.initOffset == null) {
-      _offset = const Offset(260, 550);
-      SharedPreferences.getInstance().then((value) {
-        _sp = value;
-        if (widget.sharedPreferencesKEY != null) {
-          final w = _sp?.getDouble(
-                  'FloatingDraggableButton${widget.sharedPreferencesKEY ?? ''}W') ??
-              _offset.dx;
-          final h = _sp?.getDouble(
-                  'FloatingDraggableButton${widget.sharedPreferencesKEY ?? ''}H') ??
-              _offset.dy;
-          setState(() {
-            _offset = Offset(w, h);
-          });
-        }
-      });
-    } else {
-      _offset = widget.initOffset!;
     }
+
+    SharedPreferences.getInstance().then((value) {
+      _sp = value;
+      WidgetsBinding.instance.addPostFrameCallback((_) => initMax());
+      if (widget.sharedPreferencesKEY == null) return;
+      final w = _sp?.getDouble(
+              '${widget.sharedPreferencesKEY ?? ''}FloatingDraggableButtonX') ??
+          _offset.dx;
+      final h = _sp?.getDouble(
+              '${widget.sharedPreferencesKEY ?? ''}FloatingDraggableButtonY') ??
+          _offset.dy;
+
+      setState(() {
+        _offset = Offset(w, h);
+      });
+    });
   }
 
   void _updatePosition(Offset move) {
@@ -88,10 +93,10 @@ class _FloatingDraggableButtonState extends State<FloatingDraggableButton> {
   void _dragEnd() {
     if (widget.sharedPreferencesKEY == null) return;
     _sp?.setDouble(
-        'FloatingDraggableButton${widget.sharedPreferencesKEY ?? ''}W',
+        '${widget.sharedPreferencesKEY ?? ''}FloatingDraggableButtonX',
         _offset.dx);
     _sp?.setDouble(
-        'FloatingDraggableButton${widget.sharedPreferencesKEY ?? ''}H',
+        '${widget.sharedPreferencesKEY ?? ''}FloatingDraggableButtonY',
         _offset.dy);
   }
 

@@ -73,10 +73,12 @@ class _AnConsoleFloatingButton extends StatelessWidget {
             color: Theme.of(context).floatingActionButtonTheme.backgroundColor,
             elevation: 2.0,
             borderRadius: const BorderRadius.all(Radius.circular(4)),
-            child: const Icon(
-              Icons.settings,
-              color: Colors.blue,
-              size: 45,
+            child: const Center(
+              child: Icon(
+                Icons.bug_report_rounded,
+                color: Colors.blue,
+                size: 41,
+              ),
             ),
           ),
         ),
