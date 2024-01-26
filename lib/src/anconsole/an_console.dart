@@ -15,12 +15,23 @@ class AnConsole {
 
   static AnConsole get instance => _instance;
 
-  static void push(BuildContext context, String title, Widget content) {
-    _AnConsoleOverlay.push(context, title, content);
+  _AnConsoleOverlayState? _overlayState;
+
+  // static void push(BuildContext context, String title, Widget content) {
+  //   _AnConsoleOverlay.push(context, title, content);
+  // }
+  //
+  // static void pop(BuildContext context) {
+  //   _AnConsoleOverlay.pop(context);
+  // }
+
+  static void push(String title, Widget content) {
+    assert(instance._overlayState != null);
+    instance._overlayState?.push(title, content);
   }
 
-  static void pop(BuildContext context) {
-    _AnConsoleOverlay.pop(context);
+  static void pop() {
+    instance._overlayState?.pop();
   }
 
   final List<_ConsoleRoute> _console = [];
@@ -47,6 +58,35 @@ class AnConsole {
   void addNotShowUpRoute(RoutePredicate predicate) {
     _doNotShowUp.add(predicate);
     _navigatorObserver?._fitter.add(predicate);
+  }
+
+  bool _isEnable = () {
+    bool flag = false;
+    assert(() {
+      flag = true;
+      return true;
+    }());
+    return flag;
+  }();
+
+  bool get isEnable => _isEnable;
+
+  /// 工具的模式 1:一直启用 2:一直不启用  other:非release下启用
+  set floatingMode(int mode) {
+    switch (mode) {
+      case 1:
+        _isEnable = true;
+        break;
+      case 2:
+        _isEnable = false;
+        break;
+      default:
+        _isEnable = false;
+        assert(() {
+          _isEnable = true;
+          return true;
+        }());
+    }
   }
 }
 

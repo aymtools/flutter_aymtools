@@ -117,8 +117,11 @@ class JsonView extends StatefulWidget {
       dynamic, JsonNodes Function(dynamic) parsing) jsonParser = _defJsonParser;
 
   final dynamic json;
+  final bool sliver;
 
-  const JsonView({super.key, required this.json});
+  const JsonView({super.key, required this.json}) : sliver = false;
+
+  const JsonView.sliver({super.key, required this.json}) : sliver = true;
 
   @override
   State<JsonView> createState() => _JsonViewState();
@@ -149,98 +152,102 @@ class _JsonViewState extends State<JsonView> with CancellableState {
 
   @override
   Widget build(BuildContext context) {
-    Widget child;
-    child = FutureBuilder<JsonNodes>(
+    return FutureBuilder<JsonNodes>(
         future: jsonNodes,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(
+            final r = Center(
               child:
                   Text(snapshot.error?.toString() ?? 'computeJsonView error'),
             );
+            return widget.sliver ? SliverToBoxAdapter(child: r) : r;
           } else if (snapshot.hasData) {
             final data = snapshot.requireData;
             return _buildJsonV(data);
             // return JsonView.map(snapshot.data!);
           } else {
-            return const Center(child: CircularProgressIndicator());
+            const r = Center(child: CircularProgressIndicator());
+            return widget.sliver ? const SliverToBoxAdapter(child: r) : r;
           }
         });
-    return Scaffold(
-      body: SafeArea(child: child),
-    );
   }
 
   Widget _buildJsonV(JsonNodes jsonNodes) {
     int maxLevel = jsonNodes.maxLevel;
     double defWidth = MediaQuery.of(context).size.width * 2;
-    return ListView.builder(
-      itemBuilder: (context, index) {
-        final node = jsonNodes.nodes[index];
-        Widget result;
-        switch (node.type) {
-          case NodeType.listStart:
-            result = const Text('[');
-            break;
-          case NodeType.listIndex:
-            MapEntry<int, dynamic> data = node.value;
-            final value = data.value;
-            result = Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('[${data.key}]'),
-                const Text(' : '),
-                if (isPrimitive(value))
-                  Expanded(
-                      child: Text(value is String ? '"$value"' : '$value')),
-                if (value is Map) const Text('{'),
-                if (value is List) const Text('['),
-              ],
-            );
-            break;
-          case NodeType.listEnd:
-            result = const Text(']');
-            break;
-          case NodeType.mapStart:
-            result = const Text('{');
-            break;
-          case NodeType.mapKey:
-            MapEntry<String, dynamic> data = node.value;
-            final value = data.value;
-            result = Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('"${data.key}"'),
-                const Text(' : '),
-                if (isPrimitive(value))
-                  Expanded(
-                      child: Text(value is String ? '"$value"' : '$value')),
-                if (value is Map) Text('{${value.isEmpty ? '}' : ''}'),
-                if (value is List) Text('[${value.isEmpty ? ']' : ''}'),
-              ],
-            );
-            break;
-          case NodeType.mapEnd:
-            result = const Text('}');
-            break;
-          case NodeType.value:
-            final value = node.value;
-            result = Text(value is String ? '"$value"' : '$value');
-            break;
-        }
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          controller: _controllers.addAndGet(),
-          child: SizedBox(
-            width: maxLevel * 12 + defWidth,
-            child: Padding(
-              padding: EdgeInsets.only(left: 12.0 * node.level),
-              child: result,
-            ),
+
+    Widget itemBuilder(BuildContext context, int index) {
+      final node = jsonNodes.nodes[index];
+      Widget result;
+      switch (node.type) {
+        case NodeType.listStart:
+          result = const Text('[');
+          break;
+        case NodeType.listIndex:
+          MapEntry<int, dynamic> data = node.value;
+          final value = data.value;
+          result = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('[${data.key}]'),
+              const Text(' : '),
+              if (isPrimitive(value))
+                Expanded(child: Text(value is String ? '"$value"' : '$value')),
+              if (value is Map) const Text('{'),
+              if (value is List) const Text('['),
+            ],
+          );
+          break;
+        case NodeType.listEnd:
+          result = const Text(']');
+          break;
+        case NodeType.mapStart:
+          result = const Text('{');
+          break;
+        case NodeType.mapKey:
+          MapEntry<String, dynamic> data = node.value;
+          final value = data.value;
+          result = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('"${data.key}"'),
+              const Text(' : '),
+              if (isPrimitive(value))
+                Expanded(child: Text(value is String ? '"$value"' : '$value')),
+              if (value is Map) Text('{${value.isEmpty ? '}' : ''}'),
+              if (value is List) Text('[${value.isEmpty ? ']' : ''}'),
+            ],
+          );
+          break;
+        case NodeType.mapEnd:
+          result = const Text('}');
+          break;
+        case NodeType.value:
+          final value = node.value;
+          result = Text(value is String ? '"$value"' : '$value');
+          break;
+      }
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        controller: _controllers.addAndGet(),
+        child: SizedBox(
+          width: maxLevel * 12 + defWidth,
+          child: Padding(
+            padding: EdgeInsets.only(left: 12.0 * node.level),
+            child: result,
           ),
-        );
-      },
-      itemCount: jsonNodes.nodes.length,
-    );
+        ),
+      );
+    }
+
+    return widget.sliver
+        ? SliverList.builder(
+            itemBuilder: itemBuilder,
+            itemCount: jsonNodes.nodes.length,
+          )
+        : ListView.builder(
+            itemBuilder: itemBuilder,
+            itemCount: jsonNodes.nodes.length,
+          );
   }
 }

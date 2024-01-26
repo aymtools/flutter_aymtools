@@ -48,11 +48,13 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
     super.initState();
     widget._controller._willPop = _willPop;
     AnConsoleObserver.instance._onBackPressedDispatcher._willPop = _willPop;
+    AnConsole.instance._overlayState = this;
   }
 
   @override
   void dispose() {
     AnConsoleObserver.instance._onBackPressedDispatcher._willPop = null;
+    AnConsole.instance._overlayState = null;
     super.dispose();
   }
 
@@ -82,32 +84,32 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
             color: Theme.of(context).scaffoldBackgroundColor,
             elevation: 2.0,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Column(
-              children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: SafeArea(
-                    top: false,
-                    bottom: false,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: pop,
-                          behavior: HitTestBehavior.opaque,
-                          child: Icon(
-                            Icons.arrow_back,
-                            size: 22,
-                            color: Theme.of(context).iconTheme.color,
-                          ),
-                        ),
-                        Expanded(
-                          child: MediaQuery(
-                            data: mediaQuery.copyWith(
-                              padding: mediaQuery.padding.copyWith(top: 0),
+            child: SafeArea(
+              top: false,
+              bottom: false,
+              child: MediaQuery(
+                data: mediaQuery.copyWith(
+                  padding: mediaQuery.padding.copyWith(top: 0),
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: pop,
+                            behavior: HitTestBehavior.opaque,
+                            child: Icon(
+                              Icons.arrow_back,
+                              size: 22,
+                              color: Theme.of(context).iconTheme.color,
                             ),
+                          ),
+                          Expanded(
                             child: DefaultTextStyle(
                               style: TextStyle(
                                   fontSize: 18,
@@ -163,50 +165,45 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
                               ),
                             ),
                           ),
-                        ),
-                        GestureDetector(
-                          onTap: widget._controller.callClose,
-                          behavior: HitTestBehavior.opaque,
-                          child: Icon(
-                            Icons.close,
-                            size: 22,
-                            color: Theme.of(context).iconTheme.color,
+                          GestureDetector(
+                            onTap: widget._controller.callClose,
+                            behavior: HitTestBehavior.opaque,
+                            child: Icon(
+                              Icons.close,
+                              size: 22,
+                              color: Theme.of(context).iconTheme.color,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-                Container(
-                  height: 0.5,
-                  color: Theme.of(context).dividerColor,
-                ),
-                Expanded(
-                  child: MediaQuery(
-                    data: mediaQuery.copyWith(
-                      padding: mediaQuery.padding.copyWith(top: 0),
+                    Container(
+                      height: 0.5,
+                      color: Theme.of(context).dividerColor,
                     ),
-                    child: IndexedStack(
-                      index: _routes.length,
-                      sizing: StackFit.expand,
-                      children: [
-                        consoles.isEmpty
-                            ? Container()
-                            : ValueListenableBuilder<int>(
-                                valueListenable: _selectedConsole,
-                                builder: (context, index, _) => IndexedStack(
-                                  index: index,
-                                  children: consoles
-                                      .map((e) => e.content)
-                                      .toList(growable: false),
+                    Expanded(
+                      child: IndexedStack(
+                        index: _routes.length,
+                        sizing: StackFit.expand,
+                        children: [
+                          consoles.isEmpty
+                              ? Container()
+                              : ValueListenableBuilder<int>(
+                                  valueListenable: _selectedConsole,
+                                  builder: (context, index, _) => IndexedStack(
+                                    index: index,
+                                    children: consoles
+                                        .map((e) => e.content)
+                                        .toList(growable: false),
+                                  ),
                                 ),
-                              ),
-                        ..._routes.map((e) => e.content),
-                      ],
+                          ..._routes.map((e) => e.content),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

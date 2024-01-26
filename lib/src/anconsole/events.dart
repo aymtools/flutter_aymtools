@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:aymtools/src/anconsole/an_console.dart';
 import 'package:aymtools/src/widgets/change_notifier_builder.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
@@ -17,6 +18,7 @@ class EventManager<E> with ChangeNotifier {
   List<E> get buffersReversed => buffers.reversed.toList(growable: false);
 
   void addEvent(E event) {
+    if (!AnConsole.instance.isEnable) return;
     if (_buffer.length == _bufferSize) {
       _buffer.removeFirst();
     }
@@ -25,12 +27,11 @@ class EventManager<E> with ChangeNotifier {
   }
 }
 
-
 class EventManagerConsole<T> extends StatefulWidget {
   final EventManager<T> manager;
   final int multipleWith;
   final Widget Function(BuildContext context, int position, T event)
-  eventBuilder;
+      eventBuilder;
 
   const EventManagerConsole({
     super.key,
@@ -38,7 +39,7 @@ class EventManagerConsole<T> extends StatefulWidget {
     required this.eventBuilder,
     int? multipleWith,
   }) : multipleWith =
-  multipleWith == null || multipleWith < 1 ? 1 : multipleWith;
+            multipleWith == null || multipleWith < 1 ? 1 : multipleWith;
 
   @override
   State<EventManagerConsole<T>> createState() => _EventManagerConsoleState<T>();
@@ -46,7 +47,7 @@ class EventManagerConsole<T> extends StatefulWidget {
 
 class _EventManagerConsoleState<T> extends State<EventManagerConsole<T>> {
   late final LinkedScrollControllerGroup _controllers =
-  LinkedScrollControllerGroup();
+      LinkedScrollControllerGroup();
 
   @override
   Widget build(BuildContext context) {
@@ -58,19 +59,19 @@ class _EventManagerConsoleState<T> extends State<EventManagerConsole<T>> {
       builder: (_, logs, __) {
         final data = logs.buffersReversed;
         return ListView.separated(
-          padding: EdgeInsets.zero,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           itemBuilder: (context, index) {
             final item = data[index];
             return width == 0.0
                 ? widget.eventBuilder(context, index, item)
                 : SingleChildScrollView(
-              controller: _controllers.addAndGet(),
-              scrollDirection: Axis.horizontal,
-              child: SizedBox(
-                width: width,
-                child: widget.eventBuilder(context, index, item),
-              ),
-            );
+                    controller: _controllers.addAndGet(),
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: width,
+                      child: widget.eventBuilder(context, index, item),
+                    ),
+                  );
           },
           separatorBuilder: (context, _) =>
               const Padding(padding: EdgeInsets.only(top: 12)),

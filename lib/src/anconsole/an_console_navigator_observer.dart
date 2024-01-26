@@ -39,25 +39,22 @@ class AnConsoleObserver extends NavigatorTopRouteChangeObserver {
 
   @override
   void onTopRouteChange(Route? route) {
-    assert(() {
-      //仅在非release模式下显示悬浮窗
-      if (route is ModalBottomSheetRoute || route is DialogRoute) {
-        _toolsStatus.value = false;
-      } else if (route?.settings != null && _fitter.any((e) => e.call(route!))) {
-        _toolsStatus.value = false;
-      } else if (route?.settings != null) {
-        _toolsStatus.value = true;
-        if (_btnConsole == null) {
-          _btnConsole = _createFloatingButton();
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_btnConsole != null) {
-              navigator?.overlay?.insert(_btnConsole!);
-            }
-          });
-        }
+    if (!AnConsole.instance.isEnable) return;
+    if (route is ModalBottomSheetRoute || route is DialogRoute) {
+      _toolsStatus.value = false;
+    } else if (route?.settings != null && _fitter.any((e) => e.call(route!))) {
+      _toolsStatus.value = false;
+    } else if (route?.settings != null) {
+      _toolsStatus.value = true;
+      if (_btnConsole == null && _routes.isNotEmpty) {
+        _btnConsole = _createFloatingButton();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_btnConsole != null) {
+            navigator?.overlay?.insert(_btnConsole!);
+          }
+        });
       }
-      return true;
-    }());
+    }
   }
 
   OverlayEntry? _btnConsole;
