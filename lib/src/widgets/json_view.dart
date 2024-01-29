@@ -241,9 +241,11 @@ class _JsonViewState extends State<JsonView> with CancellableState {
     }
 
     return widget.sliver
-        ? SliverList.builder(
-            itemBuilder: itemBuilder,
-            itemCount: jsonNodes.nodes.length,
+        ? SliverList(
+            delegate: SliverChildBuilderDelegate(
+              itemBuilder,
+              childCount: jsonNodes.nodes.length,
+            ),
           )
         : ListView.builder(
             itemBuilder: itemBuilder,
