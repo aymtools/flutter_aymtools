@@ -128,11 +128,10 @@ class JsonView extends StatefulWidget {
 }
 
 class _JsonViewState extends State<JsonView> with CancellableState {
-  late final LinkedScrollControllerGroup _controllers =
-      LinkedScrollControllerGroup();
+  late LinkedScrollControllerGroup _controllers = LinkedScrollControllerGroup();
 
   late Future<JsonNodes> jsonNodes;
-  String? jsonStr;
+  dynamic jsonStr;
   Cancellable? parseJsonCancellable;
 
   @override
@@ -141,8 +140,19 @@ class _JsonViewState extends State<JsonView> with CancellableState {
     _parseJson(widget.json);
   }
 
+  @override
+  void didUpdateWidget(covariant JsonView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.json != oldWidget.json) {
+      // _controllers
+      _controllers = LinkedScrollControllerGroup();
+      _parseJson(widget.json);
+    }
+  }
+
   _parseJson(dynamic jsonStr) {
     if (jsonStr == null || jsonStr == this.jsonStr) return;
+    this.jsonStr = jsonStr;
     parseJsonCancellable?.cancel();
     parseJsonCancellable = makeCancellable();
     jsonNodes = JsonView.jsonParser(jsonStr, _parsing)
@@ -178,70 +188,16 @@ class _JsonViewState extends State<JsonView> with CancellableState {
 
     Widget itemBuilder(BuildContext context, int index) {
       final node = jsonNodes.nodes[index];
-      Widget result;
-      switch (node.type) {
-        case NodeType.listStart:
-          result = const Text('[');
-          break;
-        case NodeType.listIndex:
-          MapEntry<int, dynamic> data = node.value;
-          final value = data.value;
-          result = Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('[${data.key}]'),
-              const Text(' : '),
-              if (isPrimitive(value))
-                Expanded(child: Text(value is String ? '"$value"' : '$value')),
-              if (value is Map) const Text('{'),
-              if (value is List) const Text('['),
-            ],
-          );
-          break;
-        case NodeType.listEnd:
-          result = const Text(']');
-          break;
-        case NodeType.mapStart:
-          result = const Text('{');
-          break;
-        case NodeType.mapKey:
-          MapEntry<String, dynamic> data = node.value;
-          final value = data.value;
-          result = Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('"${data.key}"'),
-              const Text(' : '),
-              if (isPrimitive(value))
-                Expanded(child: Text(value is String ? '"$value"' : '$value')),
-              if (value is Map) Text('{${value.isEmpty ? '}' : ''}'),
-              if (value is List) Text('[${value.isEmpty ? ']' : ''}'),
-            ],
-          );
-          break;
-        case NodeType.mapEnd:
-          result = const Text('}');
-          break;
-        case NodeType.value:
-          final value = node.value;
-          result = Text(value is String ? '"$value"' : '$value');
-          break;
-      }
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        controller: _controllers.addAndGet(),
-        child: SizedBox(
-          width: maxLevel * 12 + defWidth,
-          child: Padding(
-            padding: EdgeInsets.only(left: 12.0 * node.level),
-            child: result,
-          ),
-        ),
-      );
+      return _JsonNodeBuilder(
+          node: node,
+          controllers: _controllers,
+          maxLevel: maxLevel,
+          defWidth: defWidth);
     }
 
     return widget.sliver
         ? SliverList(
+            key: ValueKey(widget.json),
             delegate: SliverChildBuilderDelegate(
               itemBuilder,
               childCount: jsonNodes.nodes.length,
@@ -251,5 +207,106 @@ class _JsonViewState extends State<JsonView> with CancellableState {
             itemBuilder: itemBuilder,
             itemCount: jsonNodes.nodes.length,
           );
+  }
+}
+
+class _JsonNodeBuilder extends StatefulWidget {
+  final Node node;
+  final LinkedScrollControllerGroup controllers;
+  final int maxLevel;
+  final double defWidth;
+
+  const _JsonNodeBuilder(
+      {super.key,
+      required this.node,
+      required this.controllers,
+      required this.maxLevel,
+      required this.defWidth});
+
+  @override
+  State<_JsonNodeBuilder> createState() => _JsonNodeBuilderState();
+}
+
+class _JsonNodeBuilderState extends State<_JsonNodeBuilder> {
+  late ScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.controllers.addAndGet();
+  }
+
+  @override
+  void didUpdateWidget(covariant _JsonNodeBuilder oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.controllers != oldWidget.controllers) {
+      _controller = widget.controllers.addAndGet();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final node = widget.node;
+    Widget result;
+    switch (node.type) {
+      case NodeType.listStart:
+        result = const Text('[');
+        break;
+      case NodeType.listIndex:
+        MapEntry<int, dynamic> data = node.value;
+        final value = data.value;
+        result = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('[${data.key}]'),
+            const Text(' : '),
+            if (isPrimitive(value))
+              Expanded(child: Text(value is String ? '"$value"' : '$value')),
+            if (value is Map) const Text('{'),
+            if (value is List) const Text('['),
+          ],
+        );
+        break;
+      case NodeType.listEnd:
+        result = const Text(']');
+        break;
+      case NodeType.mapStart:
+        result = const Text('{');
+        break;
+      case NodeType.mapKey:
+        MapEntry<String, dynamic> data = node.value;
+        final value = data.value;
+        result = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('"${data.key}"'),
+            const Text(' : '),
+            if (isPrimitive(value))
+              Expanded(child: Text(value is String ? '"$value"' : '$value')),
+            if (value is Map) Text('{${value.isEmpty ? '}' : ''}'),
+            if (value is List) Text('[${value.isEmpty ? ']' : ''}'),
+          ],
+        );
+        break;
+      case NodeType.mapEnd:
+        result = const Text('}');
+        break;
+      case NodeType.value:
+        final value = node.value;
+        result = Text(value is String ? '"$value"' : '$value');
+        break;
+    }
+    return SingleChildScrollView(
+      key: ValueKey(_controller),
+      scrollDirection: Axis.horizontal,
+      controller: _controller,
+      child: SizedBox(
+        width: widget.maxLevel * 12 + widget.defWidth,
+        child: Padding(
+          padding: EdgeInsets.only(left: 12.0 * node.level),
+          child: result,
+        ),
+      ),
+    );
   }
 }
