@@ -24,6 +24,7 @@ class LoadingDialog {
       return;
     }
     _cancellable = CancellableEvery();
+    _cancellable!.onCancel.then((_) => _cancellable = null);
     // assert(WidgetsBinding.instance.rootElement != null);
     // final navigator = WidgetsBinding.instance.rootElement
     //     ?.findStateForChildren<NavigatorState>();
@@ -33,12 +34,22 @@ class LoadingDialog {
     navigator?.showDialog(
         builder: _builder!, cancellable: _cancellable?.asCancellable());
   }
+
+  void dismissAlways() {
+    if (_cancellable?.isAvailable == true) {
+      _cancellable?.asCancellable().cancel();
+    }
+  }
 }
 
 abstract class CancellableGroup {
   final List<Cancellable> _cancellableList = [];
 
-  late final Cancellable _manager = Cancellable();
+  late final Cancellable _manager = Cancellable()
+    ..onCancel.then((_) => _cancellableList.forEach((c) => c.cancel()));
+
+  late final Cancellable _managerAs =
+      _manager.makeCancellable(infectious: true);
 
   void add(Cancellable cancellable);
 
@@ -50,7 +61,7 @@ abstract class CancellableGroup {
 
   Future get onCancel => _manager.onCancel;
 
-  Cancellable asCancellable() => _manager.makeCancellable(infectious: true);
+  Cancellable asCancellable() => _managerAs;
 }
 
 class CancellableEvery extends CancellableGroup {
@@ -80,6 +91,7 @@ class CancellableAny extends CancellableGroup {
       _manager.cancel();
       return;
     }
+    _cancellableList.add(cancellable);
     cancellable.onCancel.then((value) => _manager.cancel());
   }
 }
