@@ -1,31 +1,11 @@
 part of 'an_console.dart';
 
+bool _isShowConsoleOverlay = false;
+
 class _AnConsoleFloatingButton extends StatelessWidget {
   final ValueNotifier<bool> toolsStatus;
 
   const _AnConsoleFloatingButton({super.key, required this.toolsStatus});
-
-  // Route _findLastRoute(BuildContext context) {
-  //   final history = LifecycleNavigatorObserver.getHistoryRoute(context);
-  //   final currentRoute = history.lastWhere((element) => element is PageRoute);
-  //   return _find(currentRoute.navigator!.context) ?? currentRoute;
-  // }
-  //
-  // Route? _find(BuildContext context) {
-  //   Route? result;
-  //   context.visitChildElements((element) {
-  //     if (element is StatefulElement && element.state is NavigatorState) {
-  //       final history = LifecycleNavigatorObserver.getHistoryRoute(element);
-  //       final r = history.lastWhereOrNull((element) => element is PageRoute);
-  //       result = r;
-  //     }
-  //     final r = _find(element);
-  //     if (r != null) {
-  //       result = r;
-  //     }
-  //   });
-  //   return result;
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -35,29 +15,25 @@ class _AnConsoleFloatingButton extends StatelessWidget {
       initOffset: Offset(size.width - MediaQuery.of(context).padding.right - 57,
           size.height * 3 / 4),
       onTap: () {
+        if (_isShowConsoleOverlay) return;
+        _isShowConsoleOverlay = true;
         final navigator = Navigator.of(context, rootNavigator: true);
         final overlay = navigator.overlay!;
-        // final currentRoute = _findLastRoute(context) as ModalRoute;
+        Zone.root.fork().run(() {
+          late OverlayEntry overlayEntry;
+          AnConsoleOverlayController controller = AnConsoleOverlayController(
+            callClose: () {
+              try {
+                _isShowConsoleOverlay = false;
+                overlayEntry.remove();
+              } catch (ignore) {}
+            },
+          );
 
-        late OverlayEntry overlayEntry;
-        late WillPopCallback callback;
-        AnConsoleOverlayController controller = AnConsoleOverlayController(
-          callClose: () {
-            try {
-              overlayEntry.remove();
-            } catch (ignore) {}
-            // currentRoute.removeScopedWillPopCallback(callback);
-          },
-        );
-
-        callback = () {
-          return controller._willPop?.call() ?? Future.value(false);
-        };
-
-        // currentRoute.addScopedWillPopCallback(callback);
-        overlayEntry = OverlayEntry(
-            builder: (context) => _AnConsoleOverlay(controller: controller));
-        overlay.insert(overlayEntry);
+          overlayEntry = OverlayEntry(
+              builder: (context) => _AnConsoleOverlay(controller: controller));
+          overlay.insert(overlayEntry);
+        });
       },
       child: ValueListenableBuilder<bool>(
         valueListenable: toolsStatus,

@@ -15,14 +15,12 @@ class EventManager<E> with ChangeNotifier {
 
   List<E> get buffers => _buffer.toList(growable: false);
 
-  List<E> get buffersReversed => buffers.reversed.toList(growable: false);
-
   void addEvent(E event) {
     if (!AnConsole.instance.isEnable) return;
     if (_buffer.length == _bufferSize) {
       _buffer.removeFirst();
     }
-    _buffer.add(event);
+    _buffer.addFirst(event);
     notifyListeners();
   }
 }
@@ -57,11 +55,11 @@ class _EventManagerConsoleState<T> extends State<EventManagerConsole<T>> {
     return ChangeNotifierBuilder<EventManager<T>>(
       changeNotifier: widget.manager,
       builder: (_, logs, __) {
-        final data = logs.buffersReversed;
+        final data = logs._buffer;
         return ListView.separated(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           itemBuilder: (context, index) {
-            final item = data[index];
+            final item = data.elementAt(index);
             return width == 0.0
                 ? widget.eventBuilder(context, index, item)
                 : SingleChildScrollView(

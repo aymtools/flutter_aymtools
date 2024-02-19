@@ -33,9 +33,10 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
   final List<_ConsoleRoute> _routes = [];
   final ValueNotifier<int> _selectedConsole = ValueNotifier(0);
 
-  Future<bool> _willPop() async {
+  Future<bool> _willPop([dynamic result]) async {
     if (_routes.isNotEmpty) {
-      _routes.removeLast();
+      final route = _routes.removeLast();
+      route.completer.complete(result);
       setState(() {});
     } else {
       widget._controller.callClose();
@@ -74,14 +75,18 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
 
     final consoles = AnConsoleObserver.instance._routes;
     return Container(
-      color: Theme.of(context).disabledColor,
+      color: Theme
+          .of(context)
+          .disabledColor,
       child: Align(
         alignment: Alignment.bottomCenter,
         child: SizedBox(
           width: double.infinity,
           height: height,
           child: Material(
-            color: Theme.of(context).scaffoldBackgroundColor,
+            color: Theme
+                .of(context)
+                .scaffoldBackgroundColor,
             elevation: 2.0,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: SafeArea(
@@ -106,7 +111,10 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
                             child: Icon(
                               Icons.arrow_back,
                               size: 22,
-                              color: Theme.of(context).iconTheme.color,
+                              color: Theme
+                                  .of(context)
+                                  .iconTheme
+                                  .color,
                             ),
                           ),
                           Expanded(
@@ -114,7 +122,8 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
                               style: TextStyle(
                                   fontSize: 18,
                                   height: 1,
-                                  color: Theme.of(context)
+                                  color: Theme
+                                      .of(context)
                                       .textTheme
                                       .bodyMedium
                                       ?.color),
@@ -123,45 +132,45 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
                                 width: double.infinity,
                                 child: _routes.isNotEmpty
                                     ? Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12),
-                                        child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              _routes.last.title,
-                                              maxLines: 1,
-                                            )),
-                                      )
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        _routes.last.title,
+                                        maxLines: 1,
+                                      )),
+                                )
                                     : ListView.separated(
-                                        scrollDirection: Axis.horizontal,
-                                        itemBuilder: (_, index) =>
-                                            GestureDetector(
-                                          onTap: () =>
-                                              _selectedConsole.value = index,
-                                          child: Center(
-                                            child: ValueListenableBuilder<int>(
-                                              valueListenable: _selectedConsole,
-                                              builder: (context, selectedIndex,
-                                                      _) =>
-                                                  Text(consoles[index].title,
-                                                      style: TextStyle(
-                                                          color:
-                                                              selectedIndex ==
-                                                                      index
-                                                                  ? Colors.blue
-                                                                  : null),
-                                                      maxLines: 1),
-                                            ),
+                                  scrollDirection: Axis.horizontal,
+                                  itemBuilder: (_, index) =>
+                                      GestureDetector(
+                                        onTap: () =>
+                                        _selectedConsole.value = index,
+                                        child: Center(
+                                          child: ValueListenableBuilder<int>(
+                                            valueListenable: _selectedConsole,
+                                            builder: (context, selectedIndex,
+                                                _) =>
+                                                Text(consoles[index].title,
+                                                    style: TextStyle(
+                                                        color:
+                                                        selectedIndex ==
+                                                            index
+                                                            ? Colors.blue
+                                                            : null),
+                                                    maxLines: 1),
                                           ),
                                         ),
-                                        separatorBuilder: (_, __) =>
-                                            const Padding(
-                                                padding:
-                                                    EdgeInsets.only(left: 12)),
-                                        itemCount: consoles.length,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12),
                                       ),
+                                  separatorBuilder: (_, __) =>
+                                  const Padding(
+                                      padding:
+                                      EdgeInsets.only(left: 12)),
+                                  itemCount: consoles.length,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                ),
                               ),
                             ),
                           ),
@@ -171,7 +180,10 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
                             child: Icon(
                               Icons.close,
                               size: 22,
-                              color: Theme.of(context).iconTheme.color,
+                              color: Theme
+                                  .of(context)
+                                  .iconTheme
+                                  .color,
                             ),
                           ),
                         ],
@@ -179,7 +191,9 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
                     ),
                     Container(
                       height: 0.5,
-                      color: Theme.of(context).dividerColor,
+                      color: Theme
+                          .of(context)
+                          .dividerColor,
                     ),
                     Expanded(
                       child: IndexedStack(
@@ -189,14 +203,15 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
                           consoles.isEmpty
                               ? Container()
                               : ValueListenableBuilder<int>(
-                                  valueListenable: _selectedConsole,
-                                  builder: (context, index, _) => IndexedStack(
-                                    index: index,
-                                    children: consoles
-                                        .map((e) => e.content)
-                                        .toList(growable: false),
-                                  ),
+                            valueListenable: _selectedConsole,
+                            builder: (context, index, _) =>
+                                IndexedStack(
+                                  index: index,
+                                  children: consoles
+                                      .map((e) => e.content)
+                                      .toList(growable: false),
                                 ),
+                          ),
                           ..._routes.map((e) => e.content),
                         ],
                       ),
@@ -211,19 +226,22 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
     );
   }
 
-  void push(String title, Widget content) {
-    _routes.add(_ConsoleRoute(title, content));
+  Future<T?> push<T>(String title, Widget content) {
+    final route = _ConsoleRoute<T>(title, content);
+    _routes.add(route);
     setState(() {});
+    return route.completer.future;
   }
 
-  void pop() {
-    _willPop();
+  void pop([dynamic result]) {
+    _willPop(result);
   }
 }
 
-class _ConsoleRoute {
+class _ConsoleRoute<T> {
   final String title;
   final Widget content;
+  final Completer<T?> completer = Completer();
 
   _ConsoleRoute(this.title, this.content);
 }

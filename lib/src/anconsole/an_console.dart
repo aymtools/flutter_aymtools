@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:aymtools/src/floating/draggable.dart';
 import 'package:aymtools/src/navigator/observer/top_router_change.dart';
 import 'package:flutter/material.dart';
@@ -17,21 +18,13 @@ class AnConsole {
 
   _AnConsoleOverlayState? _overlayState;
 
-  // static void push(BuildContext context, String title, Widget content) {
-  //   _AnConsoleOverlay.push(context, title, content);
-  // }
-  //
-  // static void pop(BuildContext context) {
-  //   _AnConsoleOverlay.pop(context);
-  // }
-
-  static void push(String title, Widget content) {
+  static Future<T?> push<T>(String title, Widget content) {
     assert(instance._overlayState != null);
-    instance._overlayState?.push(title, content);
+    return instance._overlayState!.push(title, content);
   }
 
-  static void pop() {
-    instance._overlayState?.pop();
+  static void pop([dynamic result]) {
+    instance._overlayState?.pop(result);
   }
 
   final List<_ConsoleRoute> _console = [];
