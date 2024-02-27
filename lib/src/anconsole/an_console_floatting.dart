@@ -26,7 +26,7 @@ class _AnConsoleFloatingButton extends StatelessWidget {
               try {
                 _isShowConsoleOverlay = false;
                 overlayEntry.remove();
-              } catch (ignore) {}
+              } catch (_) {}
             },
           );
 

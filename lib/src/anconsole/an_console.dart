@@ -9,6 +9,10 @@ part 'an_console_navigator_observer.dart';
 
 part 'an_console_overlay.dart';
 
+part 'an_console_theater.dart';
+
+part 'an_console_widgets.dart';
+
 class AnConsole {
   AnConsole._();
 
@@ -43,7 +47,7 @@ class AnConsole {
   }
 
   void addConsole(String title, Widget content) {
-    final route = _ConsoleRoute(title, content);
+    final route = _ConsoleRoute(Text(title, maxLines: 1), content);
     _console.add(route);
     _navigatorObserver?._addConsole(route);
   }
