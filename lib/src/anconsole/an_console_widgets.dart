@@ -97,59 +97,53 @@ class _AnConsoleOverlayGroup extends StatelessWidget {
   }
 }
 
-class _InitRoute extends StatefulWidget {
-  final ValueNotifier<int> selectedConsole;
+class _InitRouteTitle extends StatelessWidget {
+  final TabController controller;
 
-  const _InitRoute({super.key, required this.selectedConsole});
-
-  @override
-  State<_InitRoute> createState() => _InitRouteState();
-}
-
-class _InitRouteState extends State<_InitRoute> with TickerProviderStateMixin {
-  late TabController _controller = TabController(
-      length: AnConsoleObserver.instance._routes.length,
-      vsync: this,
-      initialIndex: widget.selectedConsole.value);
-
-  _change() {
-    _controller.index = widget.selectedConsole.value;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    widget.selectedConsole.addListener(_change);
-  }
-
-  @override
-  void didUpdateWidget(covariant _InitRoute oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.selectedConsole != oldWidget.selectedConsole) {
-      oldWidget.selectedConsole.removeListener(_change);
-      _controller = TabController(
-          length: AnConsoleObserver.instance._routes.length,
-          vsync: this,
-          initialIndex: widget.selectedConsole.value);
-      widget.selectedConsole.addListener(_change);
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    widget.selectedConsole.removeListener(_change);
-  }
+  const _InitRouteTitle({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
     final consoles = AnConsoleObserver.instance._routes;
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemBuilder: (_, index) => GestureDetector(
+        onTap: () => controller.index = index,
+        child: Center(
+          child: ChangeNotifierBuilder<TabController>(
+            changeNotifier: controller,
+            builder: (_, controller, __) => DefaultTextStyle.merge(
+              style: TextStyle(
+                  color: controller.index == index ? Colors.blue : null),
+              maxLines: 1,
+              child: consoles[index].title,
+            ),
+          ),
+        ),
+      ),
+      separatorBuilder: (_, __) =>
+          const Padding(padding: EdgeInsets.only(left: 12)),
+      itemCount: consoles.length,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+    );
+  }
+}
 
+class _InitRoute extends StatelessWidget {
+  final TabController controller;
+
+  const _InitRoute({
+    super.key,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final consoles = AnConsoleObserver.instance._routes;
     return consoles.isEmpty
         ? Container()
         : TabBarView(
-            controller: _controller,
+            controller: controller,
             physics: const NeverScrollableScrollPhysics(),
             children: consoles
                 .map((e) =>

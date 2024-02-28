@@ -1,4 +1,8 @@
-part of 'an_console.dart';
+// // part of 'an_console.dart';
+//
+// import 'package:flutter/cupertino.dart';
+// import 'package:flutter/foundation.dart';
+// import 'package:flutter/rendering.dart';
 //
 // /// Special version of a [Stack], that doesn't layout and render the first
 // /// [skipCount] children.
@@ -144,25 +148,6 @@ part of 'an_console.dart';
 //   }
 // }
 //
-// class _TheaterParentData extends StackParentData {
-//   // The OverlayEntry that directly created this child. This field is null for
-//   // children that are created by an OverlayPortal.
-//   OverlayEntry? overlayEntry;
-//
-//   // _overlayStateMounted is set to null in _OverlayEntryWidgetState's dispose
-//   // method. This property is only accessed during layout, paint and hit-test so
-//   // the `value!` should be safe.
-//   Iterator<RenderBox>? get paintOrderIterator => overlayEntry
-//       ?._overlayEntryStateNotifier.value!._paintOrderIterable.iterator;
-//
-//   Iterator<RenderBox>? get hitTestOrderIterator => overlayEntry
-//       ?._overlayEntryStateNotifier.value!._hitTestOrderIterable.iterator;
-//
-//   void visitChildrenOfOverlayEntry(RenderObjectVisitor visitor) =>
-//       overlayEntry?._overlayEntryStateNotifier.value!._paintOrderIterable
-//           .forEach(visitor);
-// }
-//
 // class _RenderTheater extends RenderBox
 //     with
 //         ContainerRenderObjectMixin<RenderBox, StackParentData>,
@@ -182,12 +167,6 @@ part of 'an_console.dart';
 //   @override
 //   _RenderTheater get theater => this;
 //
-//   @override
-//   void setupParentData(RenderBox child) {
-//     if (child.parentData is! _TheaterParentData) {
-//       child.parentData = _TheaterParentData();
-//     }
-//   }
 //
 //   @override
 //   void attach(PipelineOwner owner) {

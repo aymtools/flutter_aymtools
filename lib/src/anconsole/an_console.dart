@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:aymtools/src/floating/draggable.dart';
 import 'package:aymtools/src/navigator/observer/top_router_change.dart';
+import 'package:aymtools/src/widgets/change_notifier_builder.dart';
 import 'package:flutter/material.dart';
 
 part 'an_console_floatting.dart';
@@ -9,7 +10,7 @@ part 'an_console_navigator_observer.dart';
 
 part 'an_console_overlay.dart';
 
-part 'an_console_theater.dart';
+// part 'an_console_theater.dart';
 
 part 'an_console_widgets.dart';
 

@@ -11,10 +11,19 @@ class _AnConsoleOverlay extends StatefulWidget {
   State<_AnConsoleOverlay> createState() => _AnConsoleOverlayState();
 }
 
-class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
+class _AnConsoleOverlayState extends State<_AnConsoleOverlay>
+    with TickerProviderStateMixin {
   final List<_ConsoleRoute> _routes = [];
-  final ValueNotifier<int> _selectedConsole = ValueNotifier(0);
-  late final _ConsoleRoute initRoute;
+
+  late final TabController _controller = TabController(
+      length: AnConsoleObserver.instance._routes.length,
+      vsync: this,
+      animationDuration: Duration.zero,
+      initialIndex: 0);
+
+  late final _ConsoleRoute initRoute = _ConsoleRoute(
+      _InitRouteTitle(controller: _controller),
+      _InitRoute(controller: _controller));
 
   Future<bool> _willPop([dynamic result]) async {
     if (_routes.isNotEmpty) {
@@ -27,48 +36,9 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
     return false;
   }
 
-  Widget _initRouteTitle() {
-    final consoles = AnConsoleObserver.instance._routes;
-    return ListView.separated(
-      scrollDirection: Axis.horizontal,
-      itemBuilder: (_, index) => GestureDetector(
-        onTap: () => _selectedConsole.value = index,
-        child: Center(
-          child: ValueListenableBuilder<int>(
-            valueListenable: _selectedConsole,
-            builder: (context, selectedIndex, _) => DefaultTextStyle.merge(
-                style: TextStyle(
-                    color: selectedIndex == index ? Colors.blue : null),
-                maxLines: 1,
-                child: consoles[index].title),
-          ),
-        ),
-      ),
-      separatorBuilder: (_, __) =>
-          const Padding(padding: EdgeInsets.only(left: 12)),
-      itemCount: consoles.length,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-    );
-  }
-
-  Widget _initRouteContent() {
-    final consoles = AnConsoleObserver.instance._routes;
-    return consoles.isEmpty
-        ? Container()
-        : ValueListenableBuilder<int>(
-            valueListenable: _selectedConsole,
-            builder: (context, index, _) => IndexedStack(
-              index: index,
-              children: consoles.map((e) => e.content).toList(growable: false),
-            ),
-          );
-  }
-
   @override
   void initState() {
     super.initState();
-    initRoute = _ConsoleRoute(
-        _initRouteTitle(), _InitRoute(selectedConsole: _selectedConsole));
 
     widget._controller._willPop = _willPop;
     AnConsoleObserver.instance._onBackPressedDispatcher._willPop = _willPop;
@@ -99,7 +69,7 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
             child: Align(
                 alignment: Alignment.centerLeft, child: _routes.last.title),
           )
-        : RepaintBoundary(child: initRoute.content);
+        : RepaintBoundary(child: initRoute.title);
 
     final content = IndexedStack(
       index: _routes.length,
@@ -126,6 +96,37 @@ class _AnConsoleOverlayState extends State<_AnConsoleOverlay> {
 
   void pop([dynamic result]) {
     _willPop(result);
+  }
+
+  Future<bool> showConfirm({
+    String? title,
+    required String content,
+    String? ok,
+    String? cancel,
+  }) {
+    return Future(() => false);
+  }
+
+  void showToast(String message) {}
+
+  Future<T?> showOptionSelect<T>({
+    String? title,
+    required List<T> options,
+    required String Function(T option) displayToStr,
+    T? selected,
+    String? cancel,
+  }) {
+    return Future(() => selected);
+  }
+
+  Future<List<T>?> showOptionMultiSelect<T>({
+    String? title,
+    required List<T> options,
+    required String Function(T option) displayToStr,
+    List<T>? selected,
+    String? cancel,
+  }) {
+    return Future(() => selected);
   }
 }
 
