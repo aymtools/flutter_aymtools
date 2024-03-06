@@ -39,18 +39,24 @@ class _ConsoleToast extends StatelessWidget {
             }
             return Positioned(
               bottom: 48,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
+              child: SafeArea(
+                top: false,
+                bottom: false,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
+                    margin: const EdgeInsets.fromLTRB(24, 48, 24, 0),
+                    padding: const EdgeInsets.all(12),
+                    child: DefaultTextStyle(
+                        style: (Theme.of(context).textTheme.bodyMedium ??
+                                const TextStyle(fontSize: 14))
+                            .copyWith(color: Colors.white),
+                        child: Text(data.message!)),
                   ),
-                  child: DefaultTextStyle(
-                      style: (Theme.of(context).textTheme.bodyMedium ??
-                              const TextStyle(fontSize: 14))
-                          .copyWith(color: Colors.white),
-                      child: Text(data.message!)),
                 ),
               ),
             );
