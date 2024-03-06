@@ -1,6 +1,6 @@
-part of 'an_console.dart';
+part of 'console.dart';
 
-class _AnConsoleOnBackPressedDispatcher with WidgetsBindingObserver {
+class _OnBackPressedDispatcher with WidgetsBindingObserver {
   WillPopCallback? _willPop;
   final List<WillPopCallback> _willPops = [];
 
@@ -12,7 +12,7 @@ class _AnConsoleOnBackPressedDispatcher with WidgetsBindingObserver {
     _willPops.remove(callback);
   }
 
-  _AnConsoleOnBackPressedDispatcher();
+  _OnBackPressedDispatcher();
 
   @override
   Future<bool> didPopRoute() async {
@@ -29,7 +29,7 @@ class _AnConsoleOnBackPressedDispatcher with WidgetsBindingObserver {
   }
 }
 
-class AnConsoleObserver extends NavigatorTopRouteChangeObserver {
+class ConsoleNavigatorObserver extends NavigatorTopRouteChangeObserver {
   //某些路由下不展示的过滤器
   final List<RoutePredicate> _fitter = [];
 
@@ -37,18 +37,15 @@ class AnConsoleObserver extends NavigatorTopRouteChangeObserver {
 
   final List<_ConsoleRoute> _routes = [];
 
-  final _AnConsoleOnBackPressedDispatcher _onBackPressedDispatcher =
-      _AnConsoleOnBackPressedDispatcher();
+  final _OnBackPressedDispatcher _onBackPressedDispatcher =
+      _OnBackPressedDispatcher();
 
-  AnConsoleObserver._() {
+  ConsoleNavigatorObserver._() {
     WidgetsBinding.instance.addObserver(_onBackPressedDispatcher);
   }
 
-  static final AnConsoleObserver _instance = AnConsoleObserver._();
-
-  static AnConsoleObserver get instance => _instance;
-
-  factory AnConsoleObserver() => instance;
+  static final ConsoleNavigatorObserver _instance =
+      ConsoleNavigatorObserver._();
 
   void _addConsole(_ConsoleRoute route) {
     _routes.add(route);
@@ -79,6 +76,6 @@ class AnConsoleObserver extends NavigatorTopRouteChangeObserver {
   OverlayEntry _createFloatingButton() {
     return OverlayEntry(
         builder: (BuildContext c) =>
-            _AnConsoleFloatingButton(toolsStatus: _toolsStatus));
+            _ConsoleFloatingButton(toolsStatus: _toolsStatus));
   }
 }

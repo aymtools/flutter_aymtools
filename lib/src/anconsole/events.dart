@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-import 'package:aymtools/src/anconsole/an_console.dart';
+import 'package:aymtools/src/anconsole/console.dart';
 import 'package:aymtools/src/widgets/change_notifier_builder.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
@@ -17,8 +17,8 @@ class EventManager<E> with ChangeNotifier {
 
   void addEvent(E event) {
     if (!AnConsole.instance.isEnable) return;
-    if (_buffer.length == _bufferSize) {
-      _buffer.removeFirst();
+    while (_buffer.length >= _bufferSize) {
+      _buffer.removeLast();
     }
     _buffer.addFirst(event);
     notifyListeners();

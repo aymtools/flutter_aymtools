@@ -1,6 +1,6 @@
 library aymtools;
 
-export 'src/anconsole/an_console.dart';
+export 'src/anconsole/console.dart';
 export 'src/anconsole/events.dart';
 export 'src/dialog/context_ext.dart';
 export 'src/dialog/dialog_ext.dart';
@@ -35,3 +35,5 @@ export 'src/widgets/change_notifier_builder.dart';
 export 'src/widgets/multi_child_separated.dart';
 
 export 'src/isolate/compute_ext.dart';
+
+// export 'src/toast/toast.dart';

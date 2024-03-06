@@ -1,11 +1,11 @@
-part of 'an_console.dart';
+part of 'console.dart';
 
 bool _isShowConsoleOverlay = false;
 
-class _AnConsoleFloatingButton extends StatelessWidget {
+class _ConsoleFloatingButton extends StatelessWidget {
   final ValueNotifier<bool> toolsStatus;
 
-  const _AnConsoleFloatingButton({super.key, required this.toolsStatus});
+  const _ConsoleFloatingButton({super.key, required this.toolsStatus});
 
   @override
   Widget build(BuildContext context) {
@@ -21,17 +21,19 @@ class _AnConsoleFloatingButton extends StatelessWidget {
         final overlay = navigator.overlay!;
         Zone.root.fork().run(() {
           late OverlayEntry overlayEntry;
-          AnConsoleOverlayController controller = AnConsoleOverlayController(
+          ConsoleOverlayController controller = ConsoleOverlayController(
             callClose: () {
+              AnConsole.instance._overlayController = null;
               try {
                 _isShowConsoleOverlay = false;
                 overlayEntry.remove();
               } catch (_) {}
             },
           );
+          AnConsole.instance._overlayController = controller;
 
-          overlayEntry = OverlayEntry(
-              builder: (context) => _AnConsoleOverlay(controller: controller));
+          overlayEntry =
+              OverlayEntry(builder: (context) => const _ConsoleWidget());
           overlay.insert(overlayEntry);
         });
       },

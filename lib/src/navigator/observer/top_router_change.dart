@@ -32,6 +32,7 @@ abstract class NavigatorTopRouteChangeObserver extends NavigatorObserver {
     if (newRoute?.isCurrent == true) onTopRouteChange(newRoute!);
   }
 
+  @protected
   void onTopRouteChange(Route route);
 }
 
