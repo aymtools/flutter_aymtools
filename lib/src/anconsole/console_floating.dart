@@ -1,7 +1,5 @@
 part of 'console.dart';
 
-bool _isShowConsoleOverlay = false;
-
 class _ConsoleFloatingButton extends StatelessWidget {
   final ValueNotifier<bool> toolsStatus;
 
@@ -15,22 +13,25 @@ class _ConsoleFloatingButton extends StatelessWidget {
       initOffset: Offset(size.width - MediaQuery.of(context).padding.right - 57,
           size.height * 3 / 4),
       onTap: () {
-        if (_isShowConsoleOverlay) return;
-        _isShowConsoleOverlay = true;
+        if (AnConsole.instance._overlayController != null) return;
         final navigator = Navigator.of(context, rootNavigator: true);
         final overlay = navigator.overlay!;
         Zone.root.fork().run(() {
           late OverlayEntry overlayEntry;
-          ConsoleOverlayController controller = ConsoleOverlayController(
+          late ConsoleOverlayController controller;
+          controller = ConsoleOverlayController(
             callClose: () {
-              AnConsole.instance._overlayController = null;
               try {
-                _isShowConsoleOverlay = false;
+                AnConsole.instance._overlayController = null;
+                AnConsole.instance.navigatorObserver._onBackPressedDispatcher
+                    .addWillPopCallback(controller._willPop);
                 overlayEntry.remove();
               } catch (_) {}
             },
           );
           AnConsole.instance._overlayController = controller;
+          AnConsole.instance.navigatorObserver._onBackPressedDispatcher
+              .addWillPopCallback(controller._willPop);
 
           overlayEntry =
               OverlayEntry(builder: (context) => const _ConsoleWidget());

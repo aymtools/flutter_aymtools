@@ -10,7 +10,7 @@ import 'package:flutter/rendering.dart';
 ///
 /// The first [skipCount] children are considered "offstage".
 class ConsoleTheatre extends MultiChildRenderObjectWidget {
-  const ConsoleTheatre({super.key,
+  ConsoleTheatre({super.key,
     this.skipCount = 0,
     this.clipBehavior = Clip.hardEdge,
     super.children,

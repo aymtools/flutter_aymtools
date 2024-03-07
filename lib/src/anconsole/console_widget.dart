@@ -41,32 +41,42 @@ class _ConsoleWidget extends StatelessWidget {
                       ),
                     ),
                     Positioned(
-                      left: 0,
-                      top: 0,
-                      child: GestureDetector(
-                        onTap: () => AnConsole
-                            .instance._overlayController?._willPop
-                            ?.call(),
-                        behavior: HitTestBehavior.opaque,
-                        child: Icon(
-                          Icons.arrow_back,
-                          size: 22,
-                          color: Theme.of(context).iconTheme.color,
+                      left: 12,
+                      top: 6,
+                      child: SafeArea(
+                        top: false,
+                        bottom: false,
+                        right: false,
+                        child: GestureDetector(
+                          onTap: () => AnConsole
+                              .instance._overlayController?._willPop
+                              ?.call(),
+                          behavior: HitTestBehavior.opaque,
+                          child: Icon(
+                            Icons.arrow_back,
+                            size: 22,
+                            color: Theme.of(context).iconTheme.color,
+                          ),
                         ),
                       ),
                     ),
                     Positioned(
-                      right: 0,
-                      top: 0,
-                      child: GestureDetector(
-                        onTap: () => AnConsole
-                            .instance._overlayController?.callClose
-                            .call(),
-                        behavior: HitTestBehavior.opaque,
-                        child: Icon(
-                          Icons.close,
-                          size: 22,
-                          color: Theme.of(context).iconTheme.color,
+                      right: 12,
+                      top: 6,
+                      child: SafeArea(
+                        top: false,
+                        bottom: false,
+                        left: false,
+                        child: GestureDetector(
+                          onTap: () => AnConsole
+                              .instance._overlayController?.callClose
+                              .call(),
+                          behavior: HitTestBehavior.opaque,
+                          child: Icon(
+                            Icons.close,
+                            size: 22,
+                            color: Theme.of(context).iconTheme.color,
+                          ),
                         ),
                       ),
                     ),
@@ -107,6 +117,15 @@ class _ConsoleRouteManager with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> _willPop() async {
+    if (_routes.length > 1) {
+      _routes.removeLast();
+      notifyListeners();
+      return false;
+    }
+    return true;
+  }
+
   Future<T?> push<T>(String title, Widget content) {
     final route =
         _ConsoleRoutePage<T>(title: Text(title, maxLines: 1), content: content);
@@ -116,7 +135,10 @@ class _ConsoleRouteManager with ChangeNotifier {
 
   void pop([dynamic result]) {
     if (_routes.length > 1) {
-      _routes.removeLast().completer.complete(result);
+      final r = _routes.removeLast();
+      if (result != null) {
+        r.completer.complete(result);
+      }
       notifyListeners();
     }
   }
@@ -294,13 +316,11 @@ class _ConsoleRouteMainWidget extends StatefulWidget {
       _ConsoleRouteMainWidgetState();
 }
 
+int _lastTabIndex = 0;
+
 class _ConsoleRouteMainWidgetState extends State<_ConsoleRouteMainWidget>
     with TickerProviderStateMixin {
-  late final TabController _controller = TabController(
-      length: ConsoleNavigatorObserver._instance._routes.length,
-      vsync: this,
-      animationDuration: Duration.zero,
-      initialIndex: 0);
+  late final TabController _controller;
 
   late final _ConsoleRoute _mainRoute;
 
@@ -309,6 +329,17 @@ class _ConsoleRouteMainWidgetState extends State<_ConsoleRouteMainWidget>
     super.initState();
 
     final consoles = ConsoleNavigatorObserver._instance._routes;
+
+    _lastTabIndex = consoles.length >= _lastTabIndex ? 0 : _lastTabIndex;
+
+    _controller = TabController(
+        length: consoles.length,
+        vsync: this,
+        animationDuration: Duration.zero,
+        initialIndex: _lastTabIndex);
+
+    _controller.addListener(() => _lastTabIndex = _controller.index);
+
     Widget title = ListView.separated(
       scrollDirection: Axis.horizontal,
       itemBuilder: (_, index) => GestureDetector(
@@ -364,17 +395,21 @@ class _ConsoleRoutePageWidget extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-            child: DefaultTextStyle(
-              style: TextStyle(
-                  fontSize: 18,
-                  height: 1,
-                  color: Theme.of(context).textTheme.bodyMedium?.color),
-              child: SizedBox(
-                height: 22,
-                width: double.infinity,
-                child: route.title,
+          SafeArea(
+            top: false,
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 46),
+              child: DefaultTextStyle(
+                style: TextStyle(
+                    fontSize: 18,
+                    height: 1,
+                    color: Theme.of(context).textTheme.bodyMedium?.color),
+                child: SizedBox(
+                  height: 32,
+                  width: double.infinity,
+                  child: route.title,
+                ),
               ),
             ),
           ),
@@ -540,7 +575,8 @@ class _ConsoleRouteBottomSheetWidget extends StatelessWidget {
             ),
             width: double.infinity,
             color: backgroundColor,
-            child: _BaseRouteDialogWidget(title: route.title, content: route.content),
+            child: _BaseRouteDialogWidget(
+                title: route.title, content: route.content),
           ),
         ),
       ],

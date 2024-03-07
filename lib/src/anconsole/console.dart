@@ -131,7 +131,14 @@ class AnConsole {
 
 class ConsoleOverlayController {
   final void Function() callClose;
-  WillPopCallback? _willPop;
+
+  Future<bool> _willPop() async {
+    if (await _ConsoleRouteManager._instance._willPop()) {
+      callClose();
+      return false;
+    }
+    return true;
+  }
 
   ConsoleOverlayController({required this.callClose});
 }
