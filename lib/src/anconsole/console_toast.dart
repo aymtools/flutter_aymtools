@@ -30,19 +30,21 @@ class _ConsoleToast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: ChangeNotifierBuilder<_ConsoleToastQueue>(
-          changeNotifier: _ConsoleToastQueue.instance,
-          builder: (_, data, __) {
-            if (data.message == null || data.message!.isEmpty) {
-              return const SizedBox.shrink();
-            }
-            return Positioned(
-              bottom: 48,
-              child: SafeArea(
-                top: false,
-                bottom: false,
-                child: Align(
+    return Positioned(
+      bottom: 48,
+      left: 0,
+      right: 0,
+      child: SafeArea(
+        top: false,
+        bottom: false,
+        child: IgnorePointer(
+          child: ChangeNotifierBuilder<_ConsoleToastQueue>(
+              changeNotifier: _ConsoleToastQueue.instance,
+              builder: (_, data, __) {
+                if (data.message == null || data.message!.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
                     decoration: const BoxDecoration(
@@ -57,10 +59,10 @@ class _ConsoleToast extends StatelessWidget {
                             .copyWith(color: Colors.white),
                         child: Text(data.message!)),
                   ),
-                ),
-              ),
-            );
-          }),
+                );
+              }),
+        ),
+      ),
     );
   }
 }

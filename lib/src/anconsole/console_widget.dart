@@ -8,7 +8,7 @@ class _ConsoleWidget extends StatelessWidget {
     final mediaQuery = MediaQuery.of(context);
     final height = mediaQuery.size.height * 0.85;
     return Container(
-      color: Theme.of(context).disabledColor,
+      color: Colors.black54,
       child: Align(
         alignment: Alignment.bottomCenter,
         child: SizedBox(
@@ -18,6 +18,7 @@ class _ConsoleWidget extends StatelessWidget {
             color: Theme.of(context).scaffoldBackgroundColor,
             elevation: 2.0,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            clipBehavior: Clip.hardEdge,
             child: SafeArea(
               top: false,
               bottom: false,
@@ -80,7 +81,7 @@ class _ConsoleWidget extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const _ConsoleToast(),
+                    const RepaintBoundary(child: _ConsoleToast()),
                   ],
                 ),
               ),
@@ -197,8 +198,13 @@ class _ConsoleRouteManager with ChangeNotifier {
                 removeRoute(route);
                 route.completer.complete(options[index]);
               },
-              leading:
-                  options[index] == selected ? const Icon(Icons.ac_unit) : null,
+              leading: Transform.rotate(
+                angle: pi / 4,
+                child: Icon(
+                  Icons.add,
+                  color: options[index] == selected ? Colors.blue : null,
+                ),
+              ),
               title: Text(displayToStr(options[index])),
             ),
           ),
@@ -359,7 +365,6 @@ class _ConsoleRouteMainWidgetState extends State<_ConsoleRouteMainWidget>
       separatorBuilder: (_, __) =>
           const Padding(padding: EdgeInsets.only(left: 12)),
       itemCount: consoles.length,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
     );
 
     Widget content = consoles.isEmpty
@@ -408,7 +413,10 @@ class _ConsoleRoutePageWidget extends StatelessWidget {
                 child: SizedBox(
                   height: 32,
                   width: double.infinity,
-                  child: route.title,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: route.title,
+                  ),
                 ),
               ),
             ),
@@ -488,7 +496,10 @@ class _ConsoleRouteDialogWidget extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final theme = Theme.of(context);
     final backgroundColor = theme.dialogBackgroundColor;
-    Widget content = route.content;
+    Widget content = Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Center(child: route.content),
+    );
     if (route.actions.isNotEmpty) {
       content = Column(
         mainAxisSize: MainAxisSize.min,
@@ -626,9 +637,13 @@ class _OptionMultiSelectState<T> extends State<_OptionMultiSelect<T>> {
                     }
                     setState(() {});
                   },
-                  leading: selected.contains(data)
-                      ? const Icon(Icons.ac_unit)
-                      : null,
+                  leading: Transform.rotate(
+                    angle: pi / 4,
+                    child: Icon(
+                      Icons.add,
+                      color: selected.contains(data) ? Colors.blue : null,
+                    ),
+                  ),
                   title: Text(widget.displayToStr(data)),
                 );
               },

@@ -24,7 +24,7 @@ class _ConsoleFloatingButton extends StatelessWidget {
               try {
                 AnConsole.instance._overlayController = null;
                 AnConsole.instance.navigatorObserver._onBackPressedDispatcher
-                    .addWillPopCallback(controller._willPop);
+                    .removerWillPopCallback(controller._willPop);
                 overlayEntry.remove();
               } catch (_) {}
             },

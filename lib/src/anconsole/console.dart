@@ -99,7 +99,7 @@ class AnConsole {
           okLabel: okLabel,
           cancelLabel: cancelLabel);
 
-  void showToast(String message) =>
+  static void showToast(String message) =>
       _ConsoleToastQueue.instance.showToast(message);
 
   static Future<T?> showOptionSelect<T>({

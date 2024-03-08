@@ -18,7 +18,7 @@ class _OnBackPressedDispatcher with WidgetsBindingObserver {
   Future<bool> didPopRoute() async {
     if (_willPops.isNotEmpty) {
       for (var fun in _willPops.reversed) {
-        if (await fun.call() == false) {
+        if (await fun.call() == true) {
           return true;
         }
       }
