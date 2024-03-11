@@ -34,33 +34,35 @@ class _ConsoleToast extends StatelessWidget {
       bottom: 48,
       left: 0,
       right: 0,
-      child: SafeArea(
-        top: false,
-        bottom: false,
-        child: IgnorePointer(
-          child: ChangeNotifierBuilder<_ConsoleToastQueue>(
-              changeNotifier: _ConsoleToastQueue.instance,
-              builder: (_, data, __) {
-                if (data.message == null || data.message!.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
+      child: RepaintBoundary(
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: IgnorePointer(
+            child: ChangeNotifierBuilder<_ConsoleToastQueue>(
+                changeNotifier: _ConsoleToastQueue.instance,
+                builder: (_, data, __) {
+                  if (data.message == null || data.message!.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      margin: const EdgeInsets.fromLTRB(24, 48, 24, 0),
+                      padding: const EdgeInsets.all(12),
+                      child: DefaultTextStyle(
+                          style: (Theme.of(context).textTheme.bodyMedium ??
+                                  const TextStyle(fontSize: 14))
+                              .copyWith(color: Colors.white),
+                          child: Text(data.message!)),
                     ),
-                    margin: const EdgeInsets.fromLTRB(24, 48, 24, 0),
-                    padding: const EdgeInsets.all(12),
-                    child: DefaultTextStyle(
-                        style: (Theme.of(context).textTheme.bodyMedium ??
-                                const TextStyle(fontSize: 14))
-                            .copyWith(color: Colors.white),
-                        child: Text(data.message!)),
-                  ),
-                );
-              }),
+                  );
+                }),
+          ),
         ),
       ),
     );

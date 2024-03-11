@@ -81,7 +81,7 @@ class _ConsoleWidget extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const RepaintBoundary(child: _ConsoleToast()),
+                    const _ConsoleToast(),
                   ],
                 ),
               ),
