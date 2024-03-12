@@ -36,4 +36,4 @@ export 'src/widgets/multi_child_separated.dart';
 
 export 'src/isolate/compute_ext.dart';
 
-// export 'src/toast/toast.dart';
+export 'src/toast/toast.dart';

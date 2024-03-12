@@ -24,9 +24,12 @@ class _AnimationToastWidgetState extends State<AnimationToastWidget>
       opacityAnim2,
       offsetAnim;
 
+  bool _isDisposed = false;
+
   @override
   void initState() {
     super.initState();
+    _isDisposed = false;
     controllerShowAnim = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
@@ -51,8 +54,19 @@ class _AnimationToastWidgetState extends State<AnimationToastWidget>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(Duration(milliseconds: widget.animationDuration - 500))
-          .then((_) => controllerHide.forward());
+          .then((_) {
+        if (!_isDisposed) controllerHide.forward();
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    controllerShowAnim.dispose();
+    controllerShowOffset.dispose();
+    controllerHide.dispose();
+    super.dispose();
   }
 
   @override

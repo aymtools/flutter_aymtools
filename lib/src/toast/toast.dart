@@ -5,9 +5,10 @@ import 'package:cancellable/cancellable.dart';
 import 'package:flutter/material.dart';
 
 import 'cancellable_timer.dart';
+import 'toast_widget.dart';
 
 class _ToastTask {
-  final WidgetBuilder builder;
+  final Widget Function(BuildContext context, int duration) builder;
 
   final int _duration;
   final void Function() _onFinish;
@@ -18,7 +19,7 @@ class _ToastTask {
 
   CancellableTimer? _timer;
 
-  bool get isActive => _timer != null;
+  bool get isActive => _timer != null && _timer!.isActive;
 
   _ToastTask(this.builder, this._duration, this._onFinish,
       Cancellable? cancellable, this.gravity)
@@ -36,7 +37,9 @@ class _ToastTask {
       _onFinish.call();
       try {
         _toastOverlay.remove();
-      } catch (ignore) {}
+      } catch (ignore) {
+        print(ignore);
+      }
       _timer = null;
     }
 
@@ -57,28 +60,39 @@ class _ToastTask {
 
   OverlayEntry _makeToastOverlay() {
     Widget builder(BuildContext context) {
-      Widget toast = Builder(builder: (context) => this.builder(context));
-
-      toast = Material(child: toast);
-
-      final safePadding = MediaQuery.of(context).padding;
+      Widget toast =
+          Builder(builder: (context) => this.builder(context, _duration));
 
       toast = Padding(
-        padding: EdgeInsets.only(
-          left: safePadding.left + kFloatingActionButtonMargin,
-          right: safePadding.right + kFloatingActionButtonMargin,
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: toast,
         ),
+      );
+
+      toast = Material(
+        type: MaterialType.transparency,
+        color: Colors.transparent,
+        child: toast,
+      );
+
+      toast = SafeArea(child: toast);
+
+      toast = IgnorePointer(
+        child: toast,
       );
       switch (gravity) {
         case ToastGravity.top:
           toast =
-              Positioned(top: kToolbarHeight + safePadding.top, child: toast);
+              Positioned(top: kToolbarHeight, left: 0, right: 0, child: toast);
           break;
         case ToastGravity.center:
           break;
         case ToastGravity.bottom:
           toast = Positioned(
-              bottom: kBottomNavigationBarHeight + safePadding.bottom,
+              bottom: kBottomNavigationBarHeight,
+              left: 0,
+              right: 0,
               child: toast);
           break;
       }
@@ -90,18 +104,38 @@ class _ToastTask {
 }
 
 class ToastManager {
+  static const int DURATION_SHORT = 1000;
+  static const int DURATION_LONG = 3000;
+
   ToastManager._();
 
-  static ToastManager get instance => ToastManager._();
+  static final ToastManager _instance = ToastManager._();
+
+  static ToastManager get instance => _instance;
 
   ///是否立即展示最新的toast 之前的toast将会立即结束或跳过展示
   bool immediately = true;
 
   ToastGravity gravity = ToastGravity.bottom;
 
-  final Queue<_ToastTask> _toastQueue = Queue<_ToastTask>();
+  int duration = ToastManager.DURATION_LONG;
 
-  void showToast(WidgetBuilder builder,
+  final Queue<_ToastTask> _toastQueue = Queue<_ToastTask>();
+  Widget Function(BuildContext context, int duration, Widget toastWidget)
+      toastAnimateBuilder = (_, d, t) => AnimationToastWidget(
+            animationDuration: d,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF000000).withOpacity(0.75),
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
+              ),
+              child: DefaultTextStyle.merge(
+                  style: TextStyle(color: Colors.white), child: t),
+            ),
+          );
+
+  void showToast(Widget Function(BuildContext context, int duration) builder,
       {int? duration,
       ToastGravity? gravity,
       void Function()? onDismiss,
@@ -120,8 +154,8 @@ class ToastManager {
       _peekToast();
     }
 
-    toast = _ToastTask(builder, duration ?? 1000, taskFinish, cancellable,
-        gravity ?? this.gravity);
+    toast = _ToastTask(builder, duration ?? this.duration, taskFinish,
+        cancellable, gravity ?? this.gravity);
     _toastQueue.addLast(toast);
     _peekToast();
   }
@@ -139,9 +173,9 @@ class ToastManager {
     if (_toastQueue.isNotEmpty) {
       var curr = _toastQueue.first;
       if (immediately && _toastQueue.length > 1) {
-        _toastQueue.first.cancel();
+        curr.cancel();
       } else if (!curr.isActive) {
-        _toastQueue.first.run(_overlayState!);
+        curr.run(_overlayState!);
       }
     }
   }
@@ -158,12 +192,15 @@ class ToastManager {
   }
 }
 
-class Toast {
-  static const int TOAST_DURATION_SHORT = 1000;
-  static const int TOAST_DURATION_LONG = 3000;
+class ToastCompanion {
+  const ToastCompanion._();
+}
 
-  static void show(String message,
-          {int duration = TOAST_DURATION_SHORT,
+const ToastCompanion Toast = ToastCompanion._();
+
+extension ToastCompanionDefShow on ToastCompanion {
+  void show(String message,
+          {int? duration,
           ToastGravity? gravity,
           void Function()? onDismiss,
           Cancellable? cancellable}) =>
@@ -173,19 +210,22 @@ class Toast {
           onDismiss: onDismiss,
           cancellable: cancellable);
 
-  static void showWidget(Widget messageWidget,
-          {int duration = TOAST_DURATION_SHORT,
+  void showWidget(Widget messageWidget,
+          {int? duration,
           ToastGravity? gravity,
           void Function()? onDismiss,
           Cancellable? cancellable}) =>
-      showWidgetBuilder((context) => messageWidget,
+      showWidgetBuilder(
+          (context, duration) => ToastManager.instance
+              .toastAnimateBuilder(context, duration, messageWidget),
           duration: duration,
           gravity: gravity,
           onDismiss: onDismiss,
           cancellable: cancellable);
 
-  static void showWidgetBuilder(WidgetBuilder messageWidgetBuilder,
-      {int duration = TOAST_DURATION_SHORT,
+  void showWidgetBuilder(
+      Widget Function(BuildContext context, int duration) messageWidgetBuilder,
+      {int? duration,
       ToastGravity? gravity,
       void Function()? onDismiss,
       Cancellable? cancellable}) {
@@ -196,6 +236,10 @@ class Toast {
         cancellable: cancellable);
   }
 }
+
+// class Toast {
+//
+// }
 
 enum ToastGravity {
   top,
