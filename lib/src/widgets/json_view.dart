@@ -18,8 +18,9 @@ class Node {
   final int level;
   final NodeType type;
   final dynamic value;
+  final String path;
 
-  Node(this.level, this.type, this.value);
+  Node(this.level, this.type, this.value, this.path);
 }
 
 enum NodeType {
@@ -32,21 +33,66 @@ enum NodeType {
   value,
 }
 
+class JTreeNode {
+  JTreeNode._();
+
+  JTreeNode? _parent;
+
+  JTreeNode get parent => _parent!;
+
+  bool get isRoot => _parent == null;
+
+  late final String path;
+  late final List<JTreeNode> _children = [];
+
+  bool get hasChild => _children.isEmpty;
+
+  List<JTreeNode> get children => List.of(_children);
+
+  factory JTreeNode.root() {
+    final r = JTreeNode._();
+    r.path = '';
+    return r;
+  }
+
+  JTreeNode makeChild({required String path}) {
+    final r = JTreeNode._();
+    r._parent = this;
+    r.path = path;
+    return r;
+  }
+
+  String get absolutePath {
+    JTreeNode? n = this;
+    String r = '';
+    do {
+      r = '${n!.path}.$r';
+      n = n._parent;
+    } while (n != null);
+    if (r.endsWith('.')) {
+      r.substring(0, r.length - 1);
+    }
+    return r;
+  }
+}
+
 int _maxLevel = -1;
+late JTreeNode _node;
 
 JsonNodes _parsing(dynamic json) {
   List<Node> result = [];
   _maxLevel = 0;
+  _node = JTreeNode.root();
   if (json is String &&
       (json.trim().startsWith('{') || json.trim().startsWith('['))) {
     return _parsing(jsonDecode(json));
   } else if (isPrimitive(json)) {
-    result.add(Node(_maxLevel, NodeType.value, json));
+    result.add(Node(_maxLevel, NodeType.value, json, _node.absolutePath));
   } else if (json is List) {
-    result.add(Node(_maxLevel, NodeType.listStart, json));
+    result.add(Node(_maxLevel, NodeType.listStart, json, _node.absolutePath));
     result.addAll(_jlist(_maxLevel, json));
   } else if (json is Map) {
-    result.add(Node(_maxLevel, NodeType.mapStart, json));
+    result.add(Node(_maxLevel, NodeType.mapStart, json, _node.absolutePath));
     result.addAll(_jmap(_maxLevel, json as Map<String, dynamic>));
   }
   return JsonNodes(_maxLevel, result);
@@ -69,16 +115,21 @@ List<Node> _jp(int level, dynamic json) {
 List<Node> _jmap(int level, Map<String, dynamic> json) {
   List<Node> result = [];
   level++;
-  _maxLevel <= level;
+  if (_maxLevel < level) {
+    _maxLevel = level;
+  }
 
   json.forEach((key, value) {
-    result.add(Node(level, NodeType.mapKey, MapEntry(key, value)));
+    _node = _node.makeChild(path: key);
+    result.add(
+        Node(level, NodeType.mapKey, MapEntry(key, value), _node.absolutePath));
     if (!isPrimitive(value)) {
       result.addAll(_jp(level, value));
     }
+    _node = _node.parent;
   });
   if (result.isNotEmpty) {
-    result.add(Node(level - 1, NodeType.mapEnd, '}'));
+    result.add(Node(level - 1, NodeType.mapEnd, '}', _node.absolutePath));
   }
   return result;
 }
@@ -86,20 +137,25 @@ List<Node> _jmap(int level, Map<String, dynamic> json) {
 List<Node> _jlist(int level, List<dynamic> json) {
   List<Node> result = [];
   level++;
-  _maxLevel <= level;
+  if (_maxLevel < level) {
+    _maxLevel = level;
+  }
 
   if (json.isNotEmpty) {
     // result.add(LJN(level, JT.listStart, '['));
   }
   json.forEachIndexed((index, value) {
-    result.add(Node(level, NodeType.listIndex, MapEntry(index, value)));
+    _node = _node.makeChild(path: '[$index]');
+    result.add(Node(
+        level, NodeType.listIndex, MapEntry(index, value), _node.absolutePath));
     if (!isPrimitive(value)) {
       result.addAll(_jp(level, value));
     }
+    _node = _node.parent;
   });
   if (result.isNotEmpty) {
     // result.insert(0, LJN(level, JT.listStart, '['));
-    result.add(Node(level - 1, NodeType.listEnd, ']'));
+    result.add(Node(level - 1, NodeType.listEnd, ']', _node.absolutePath));
   }
   return result;
 }
@@ -119,9 +175,22 @@ class JsonView extends StatefulWidget {
   final dynamic json;
   final bool sliver;
 
-  const JsonView({super.key, required this.json}) : sliver = false;
+  final Widget Function(BuildContext context, JsonNodes nodes)? builder;
 
-  const JsonView.sliver({super.key, required this.json}) : sliver = true;
+  const JsonView({super.key, required this.json})
+      : sliver = false,
+        builder = null;
+
+  const JsonView.sliver({super.key, required this.json})
+      : sliver = true,
+        builder = null;
+
+  const JsonView.custom(
+      {super.key,
+      required this.json,
+      required this.sliver,
+      required Widget Function(BuildContext context, JsonNodes nodes)
+          this.builder});
 
   @override
   State<JsonView> createState() => _JsonViewState();
@@ -173,6 +242,9 @@ class _JsonViewState extends State<JsonView> with CancellableState {
             return widget.sliver ? SliverToBoxAdapter(child: r) : r;
           } else if (snapshot.hasData) {
             final data = snapshot.requireData;
+            if (widget.builder != null) {
+              return widget.builder!(context, data);
+            }
             return _buildJsonV(data);
             // return JsonView.map(snapshot.data!);
           } else {
@@ -184,7 +256,10 @@ class _JsonViewState extends State<JsonView> with CancellableState {
 
   Widget _buildJsonV(JsonNodes jsonNodes) {
     int maxLevel = jsonNodes.maxLevel;
-    double defWidth = MediaQuery.of(context).size.width * 2;
+    double defWidth = MediaQuery.of(context).size.width;
+    if (defWidth < 400) {
+      defWidth = defWidth * 2;
+    }
 
     Widget itemBuilder(BuildContext context, int index) {
       final node = jsonNodes.nodes[index];
@@ -301,7 +376,7 @@ class _JsonNodeBuilderState extends State<_JsonNodeBuilder> {
       scrollDirection: Axis.horizontal,
       controller: _controller,
       child: SizedBox(
-        width: widget.maxLevel * 12 + widget.defWidth,
+        width: widget.defWidth,
         child: Padding(
           padding: EdgeInsets.only(left: 12.0 * node.level),
           child: result,
