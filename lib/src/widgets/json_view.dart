@@ -7,22 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 
-class JsonNodes {
-  final int maxLevel;
-  final List<Node> nodes;
-
-  const JsonNodes(this.maxLevel, this.nodes);
-}
-
-class Node {
-  final int level;
-  final NodeType type;
-  final dynamic value;
-  final String path;
-
-  Node(this.level, this.type, this.value, this.path);
-}
-
 enum NodeType {
   listStart,
   listIndex,
@@ -33,32 +17,49 @@ enum NodeType {
   value,
 }
 
-class JTreeNode {
-  JTreeNode._();
+class JsonNodes {
+  int _maxLevel = 0;
+  final List<JTreeNode> nodes;
 
+  int get maxLevel => _maxLevel;
+  final JTreeNode rootTreeNode;
+
+  JsonNodes(this.nodes, this.rootTreeNode);
+}
+
+class JTreeNode {
   JTreeNode? _parent;
 
   JTreeNode get parent => _parent!;
 
   bool get isRoot => _parent == null;
 
-  late final String path;
-  late final List<JTreeNode> _children = [];
+  final List<JTreeNode> _children = [];
 
   bool get hasChild => _children.isEmpty;
 
-  List<JTreeNode> get children => List.of(_children);
+  List<JTreeNode> get children => List.of(_children, growable: false);
 
-  factory JTreeNode.root() {
-    final r = JTreeNode._();
-    r.path = '';
+  final String path;
+  final int level;
+  final NodeType type;
+  final dynamic value;
+
+  JTreeNode._(this.path, this.level, this.type, this.value);
+
+  factory JTreeNode.root({required NodeType type, required dynamic value}) {
+    final r = JTreeNode._('', 0, type, value);
     return r;
   }
 
-  JTreeNode makeChild({required String path}) {
-    final r = JTreeNode._();
+  JTreeNode makeChild(
+      {required String path,
+      required NodeType type,
+      required dynamic value,
+      bool add = true}) {
+    final r = JTreeNode._(path, level + 1, type, value);
     r._parent = this;
-    r.path = path;
+    if (add) children.add(r);
     return r;
   }
 
@@ -76,86 +77,98 @@ class JTreeNode {
   }
 }
 
-int _maxLevel = -1;
-late JTreeNode _node;
+// int _maxLevel = -1;
+// late JTreeNode _node;
 
 JsonNodes _parsing(dynamic json) {
-  List<Node> result = [];
-  _maxLevel = 0;
-  _node = JTreeNode.root();
   if (json is String &&
       (json.trim().startsWith('{') || json.trim().startsWith('['))) {
     return _parsing(jsonDecode(json));
   } else if (isPrimitive(json)) {
-    result.add(Node(_maxLevel, NodeType.value, json, _node.absolutePath));
-  } else if (json is List) {
-    result.add(Node(_maxLevel, NodeType.listStart, json, _node.absolutePath));
-    result.addAll(_jlist(_maxLevel, json));
-  } else if (json is Map) {
-    result.add(Node(_maxLevel, NodeType.mapStart, json, _node.absolutePath));
-    result.addAll(_jmap(_maxLevel, json as Map<String, dynamic>));
+    return JsonNodes([], JTreeNode.root(type: NodeType.value, value: json));
   }
-  return JsonNodes(_maxLevel, result);
+  List<JTreeNode> result = [];
+  late JTreeNode node;
+  if (json is List) {
+    node = JTreeNode.root(type: NodeType.listStart, value: json);
+    result.add(node);
+    result.addAll(_jlist(node, json));
+  } else if (json is Map) {
+    node = JTreeNode.root(type: NodeType.mapStart, value: json);
+    result.add(node);
+    result.addAll(_jmap(node, json as Map<String, dynamic>));
+  } else {
+    throw 'not json';
+  }
+  JsonNodes jsonNodes = JsonNodes(result, node);
+  int maxLevel = result.fold(
+      -1, (pre, element) => pre < element.level ? element.level : pre);
+  jsonNodes._maxLevel = maxLevel;
+  return jsonNodes;
 }
 
-List<Node> _jp(int level, dynamic json) {
+List<JTreeNode> _jp(JTreeNode node, dynamic json) {
   // if (json == null) {
   //   return 'Null';
   // } else
   if (json is List) {
-    return _jlist(level, json);
+    return _jlist(node, json);
   } else if (json is Map) {
-    return _jmap(level, json as Map<String, dynamic>);
+    return _jmap(node, json as Map<String, dynamic>);
   }
 
-  List<Node> result = [];
+  List<JTreeNode> result = [];
   return result;
 }
 
-List<Node> _jmap(int level, Map<String, dynamic> json) {
-  List<Node> result = [];
-  level++;
-  if (_maxLevel < level) {
-    _maxLevel = level;
-  }
+List<JTreeNode> _jmap(JTreeNode node, Map<String, dynamic> json) {
+  List<JTreeNode> result = [];
+  // level++;
+  // if (_maxLevel < level) {
+  //   _maxLevel = level;
+  // }
 
   json.forEach((key, value) {
-    _node = _node.makeChild(path: key);
-    result.add(
-        Node(level, NodeType.mapKey, MapEntry(key, value), _node.absolutePath));
+    node = node.makeChild(
+        path: key, type: NodeType.mapKey, value: MapEntry(key, value));
+    // result.add(JsonNode(level, NodeType.mapKey, MapEntry(key, value), _node));
+    result.add(node);
     if (!isPrimitive(value)) {
-      result.addAll(_jp(level, value));
+      result.addAll(_jp(node, value));
     }
-    _node = _node.parent;
+    node = node.parent;
   });
   if (result.isNotEmpty) {
-    result.add(Node(level - 1, NodeType.mapEnd, '}', _node.absolutePath));
+    result.add(node.makeChild(
+        path: '', type: NodeType.mapEnd, value: '}', add: false));
   }
   return result;
 }
 
-List<Node> _jlist(int level, List<dynamic> json) {
-  List<Node> result = [];
-  level++;
-  if (_maxLevel < level) {
-    _maxLevel = level;
-  }
+List<JTreeNode> _jlist(JTreeNode node, List<dynamic> json) {
+  List<JTreeNode> result = [];
+  // level++;
+  // if (_maxLevel < level) {
+  //   _maxLevel = level;
+  // }
 
-  if (json.isNotEmpty) {
-    // result.add(LJN(level, JT.listStart, '['));
-  }
+  // if (json.isNotEmpty) {
+  //   // result.add(LJN(level, JT.listStart, '['));
+  // }
   json.forEachIndexed((index, value) {
-    _node = _node.makeChild(path: '[$index]');
-    result.add(Node(
-        level, NodeType.listIndex, MapEntry(index, value), _node.absolutePath));
+    node = node.makeChild(
+        path: '[$index]',
+        type: NodeType.listIndex,
+        value: MapEntry(index, value));
+    result.add(node);
     if (!isPrimitive(value)) {
-      result.addAll(_jp(level, value));
+      result.addAll(_jp(node, value));
     }
-    _node = _node.parent;
+    node = node.parent;
   });
   if (result.isNotEmpty) {
-    // result.insert(0, LJN(level, JT.listStart, '['));
-    result.add(Node(level - 1, NodeType.listEnd, ']', _node.absolutePath));
+    result.add(node.makeChild(
+        path: '', type: NodeType.listEnd, value: ']', add: false));
   }
   return result;
 }
@@ -255,7 +268,7 @@ class _JsonViewState extends State<JsonView> with CancellableState {
   }
 
   Widget _buildJsonV(JsonNodes jsonNodes) {
-    int maxLevel = jsonNodes.maxLevel;
+    // int maxLevel = jsonNodes.maxLevel;
     double defWidth = MediaQuery.of(context).size.width;
     if (defWidth < 400) {
       defWidth = defWidth * 2;
@@ -263,11 +276,8 @@ class _JsonViewState extends State<JsonView> with CancellableState {
 
     Widget itemBuilder(BuildContext context, int index) {
       final node = jsonNodes.nodes[index];
-      return _JsonNodeBuilder(
-          node: node,
-          controllers: _controllers,
-          maxLevel: maxLevel,
-          defWidth: defWidth);
+      return JsonNodeBuilder(
+          node: node, controllers: _controllers, defWidth: defWidth);
     }
 
     return widget.sliver
@@ -285,24 +295,22 @@ class _JsonViewState extends State<JsonView> with CancellableState {
   }
 }
 
-class _JsonNodeBuilder extends StatefulWidget {
-  final Node node;
+class JsonNodeBuilder extends StatefulWidget {
+  final JTreeNode node;
   final LinkedScrollControllerGroup controllers;
-  final int maxLevel;
   final double defWidth;
 
-  const _JsonNodeBuilder(
+  const JsonNodeBuilder(
       {super.key,
       required this.node,
       required this.controllers,
-      required this.maxLevel,
       required this.defWidth});
 
   @override
-  State<_JsonNodeBuilder> createState() => _JsonNodeBuilderState();
+  State<JsonNodeBuilder> createState() => _JsonNodeBuilderState();
 }
 
-class _JsonNodeBuilderState extends State<_JsonNodeBuilder> {
+class _JsonNodeBuilderState extends State<JsonNodeBuilder> {
   late ScrollController _controller;
 
   @override
@@ -312,7 +320,7 @@ class _JsonNodeBuilderState extends State<_JsonNodeBuilder> {
   }
 
   @override
-  void didUpdateWidget(covariant _JsonNodeBuilder oldWidget) {
+  void didUpdateWidget(covariant JsonNodeBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.controllers != oldWidget.controllers) {
       _controller = widget.controllers.addAndGet();
