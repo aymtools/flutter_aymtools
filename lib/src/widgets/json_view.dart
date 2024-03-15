@@ -57,7 +57,7 @@ class JTreeNode {
       required NodeType type,
       required dynamic value,
       bool add = true}) {
-    final r = JTreeNode._(path, add ? level : level + 1, type, value);
+    final r = JTreeNode._(path, add ? level + 1 : level, type, value);
     r._parent = this;
     if (add) _children.add(r);
     return r;
