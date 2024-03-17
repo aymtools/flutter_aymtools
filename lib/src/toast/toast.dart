@@ -11,35 +11,33 @@ class _ToastTask {
   final Widget Function(BuildContext context, int duration) builder;
 
   final int _duration;
-  final void Function() _onFinish;
+
   final ToastGravity gravity;
   late final OverlayEntry _toastOverlay = _makeToastOverlay();
 
-  bool _isFinished;
+  final Cancellable _activeCancellable;
 
   CancellableTimer? _timer;
 
   bool get isActive => _timer != null && _timer!.isActive;
 
-  _ToastTask(this.builder, this._duration, this._onFinish,
+  _ToastTask(this.builder, this._duration, void Function() onFinish,
       Cancellable? cancellable, this.gravity)
-      : _isFinished = false {
-    cancellable?.whenCancel.then((_) => cancel());
+      : _activeCancellable = Cancellable() {
+    _activeCancellable.onCancel.then((value) => onFinish());
+    cancellable?.bindCancellable(_activeCancellable);
   }
 
   void run(OverlayState overlayState) {
-    if (_isFinished) return;
+    if (_activeCancellable.isUnavailable) return;
     finishTimer() {
-      if (_isFinished) {
+      if (_activeCancellable.isUnavailable) {
         return;
       }
-      _isFinished = true;
-      _onFinish.call();
+      _activeCancellable.cancel();
       try {
         _toastOverlay.remove();
-      } catch (ignore) {
-        print(ignore);
-      }
+      } catch (_) {}
       _timer = null;
     }
 
@@ -49,10 +47,9 @@ class _ToastTask {
   }
 
   void cancel() {
-    if (_isFinished) return;
+    if (_activeCancellable.isUnavailable) return;
     if (_timer == null) {
-      _isFinished = true;
-      _onFinish.call();
+      _activeCancellable.cancel();
     } else {
       _timer?.cancel();
     }
@@ -131,7 +128,7 @@ class ToastManager {
                 borderRadius: const BorderRadius.all(Radius.circular(12)),
               ),
               child: DefaultTextStyle.merge(
-                  style: TextStyle(color: Colors.white), child: t),
+                  style: const TextStyle(color: Colors.white), child: t),
             ),
           );
 
