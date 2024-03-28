@@ -164,3 +164,16 @@ mixin CancellableState<W extends StatefulWidget> on State<W> {
 //
 //   void loadData(Cancellable cancellable);
 // }
+extension LazyByRoute on State {
+  T lazyByRout<T>() {
+    return ModalRoute.of(context)!.settings.arguments as T;
+  }
+
+  T lazyByRoute<T, I>({required T Function(I arguments) block}) {
+    return block(ModalRoute.of(context)!.settings.arguments as I);
+  }
+
+  T lazyByRouteMap<T>({required T Function(Map arguments) block}) {
+    return lazyByRoute<T, Map>(block: block);
+  }
+}

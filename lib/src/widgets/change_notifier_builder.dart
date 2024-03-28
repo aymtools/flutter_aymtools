@@ -26,7 +26,7 @@ class _ChangeNotifierBuilderState<T extends ChangeNotifier>
   void _changer() {
     try {
       setState(() {});
-    } catch (ignore) {}
+    } catch (_) {}
   }
 
   @override

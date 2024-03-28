@@ -29,6 +29,17 @@ class _OnBackPressedDispatcher with WidgetsBindingObserver {
   }
 }
 
+_OnBackPressedDispatcher? _hookedOnBackPressedDispatcher;
+
+_hookOnBackPressed() {
+  if (_hookedOnBackPressedDispatcher == null) return;
+  try {
+    final dispatcher = _OnBackPressedDispatcher();
+    WidgetsBinding.instance.addObserver(dispatcher);
+    _hookedOnBackPressedDispatcher = dispatcher;
+  } catch (_) {}
+}
+
 class ConsoleNavigatorObserver extends NavigatorTopRouteChangeObserver {
   //某些路由下不展示的过滤器
   final List<RoutePredicate> _fitter = [];
@@ -37,11 +48,12 @@ class ConsoleNavigatorObserver extends NavigatorTopRouteChangeObserver {
 
   final List<_ConsoleRoute> _routes = [];
 
-  final _OnBackPressedDispatcher _onBackPressedDispatcher =
-      _OnBackPressedDispatcher();
+  //
+  // final _OnBackPressedDispatcher _onBackPressedDispatcher =
+  //     _OnBackPressedDispatcher();
 
   ConsoleNavigatorObserver._() {
-    WidgetsBinding.instance.addObserver(_onBackPressedDispatcher);
+    // WidgetsBinding.instance.addObserver(_onBackPressedDispatcher);
   }
 
   static final ConsoleNavigatorObserver _instance =

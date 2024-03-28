@@ -6,6 +6,7 @@ import 'package:aymtools/src/widgets/change_notifier_builder.dart';
 import 'package:aymtools/src/widgets/multi_child_separated.dart';
 import 'package:flutter/material.dart';
 
+import '../navigator/observer/proxy_observer.dart';
 import 'console_theater.dart';
 
 part 'console_floating.dart';
@@ -17,7 +18,9 @@ part 'console_toast.dart';
 part 'console_widget.dart';
 
 class AnConsole {
-  AnConsole._();
+  AnConsole._() {
+    _hookOnBackPressed();
+  }
 
   static final AnConsole _instance = AnConsole._();
 
@@ -25,31 +28,35 @@ class AnConsole {
 
   ConsoleOverlayController? _overlayController;
 
-  final List<_ConsoleRoute> _consoleRoute = [];
-  final List<RoutePredicate> _doNotShowUp = [];
+  // final List<_ConsoleRoute> _consoleRoute = [];
+  // final List<RoutePredicate> _doNotShowUp = [];
 
-  ConsoleNavigatorObserver? _navigatorObserver;
+  late final ConsoleNavigatorObserver _consoleObserver =
+      ConsoleNavigatorObserver._instance;
 
-  ConsoleNavigatorObserver get navigatorObserver {
-    if (_navigatorObserver == null) {
-      ConsoleNavigatorObserver observer = ConsoleNavigatorObserver._instance;
-      _consoleRoute.forEach(observer._addConsole);
-      observer._fitter.addAll(_doNotShowUp);
-      _navigatorObserver = observer;
-    }
-    return _navigatorObserver!;
+  late final _OnBackPressedDispatcher _onBackPressedDispatcher =
+      _hookedOnBackPressedDispatcher!;
+
+  late final ProxyManagerNavigatorObserver _navigatorObserver =
+      ProxyManagerNavigatorObserver()..addObserver(_consoleObserver);
+
+  ProxyManagerNavigatorObserver get navigatorObserver {
+    _hookOnBackPressed();
+    return _navigatorObserver;
   }
 
   void addConsole(String title, Widget content) {
+    _hookOnBackPressed();
     final route =
         _ConsoleRoutePage(title: Text(title, maxLines: 1), content: content);
-    _consoleRoute.add(route);
-    _navigatorObserver?._addConsole(route);
+    // _consoleRoute.add(route);
+    _consoleObserver._addConsole(route);
   }
 
   void addNotShowUpRoute(RoutePredicate predicate) {
-    _doNotShowUp.add(predicate);
-    _navigatorObserver?._fitter.add(predicate);
+    _hookOnBackPressed();
+    // _doNotShowUp.add(predicate);
+    _consoleObserver._fitter.add(predicate);
   }
 
   bool _isEnable = () {

@@ -11,10 +11,8 @@ extension NavigatorCancellableRoute on NavigatorState {
 
     final Cancellable showing = Cancellable();
 
-    cancellable.onCancel
-        .bindCancellable(showing)
-        .then((value) => route.navigator?.removeRoute(route));
     showing.bindCancellable(cancellable);
+    showing.onCancel.then((value) => route.navigator?.removeRoute(route));
 
     return push<T>(route).whenComplete(() => showing.cancel());
   }

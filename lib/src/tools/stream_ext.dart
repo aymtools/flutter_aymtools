@@ -15,7 +15,7 @@ extension StreamToolsExt<T> on Stream<T> {
     void Function(T value) setLatest;
 
     Timer? timer;
-    if (repeatTimeout != null && repeatTimeout != Duration.zero) {
+    if (repeatTimeout != null && repeatTimeout > Duration.zero) {
       setLatest = (value) {
         timer?.cancel();
         latest = value;
@@ -57,19 +57,4 @@ extension StreamToolsExt<T> on Stream<T> {
       };
     });
   }
-
-// Stream<T> bindLifecycle(LifecycleObserverRegister register,
-//     {LifecycleState state = LifecycleState.started,
-//     bool repeatLastOnRestart = false}) {
-//
-//   final transformer =
-//       StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
-//     if (register.currentLifecycleState >= state) {
-//       sink.add(data);
-//     }
-//   });
-//
-//   StreamTransformer.fromBind((p0) => null)
-//   return transform(transformer);
-// }
 }

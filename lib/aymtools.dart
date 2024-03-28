@@ -19,6 +19,7 @@ export 'src/navigator/an_navigator.dart';
 export 'src/navigator/interceptor_navigator.dart';
 export 'src/navigator/an_navigator_ext.dart';
 export 'src/navigator/observer/top_router_change.dart';
+export 'src/navigator/observer/proxy_observer.dart';
 
 export 'src/tools/cancellable_ext.dart';
 export 'src/tools/context_ext.dart';

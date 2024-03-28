@@ -67,14 +67,72 @@ extension LifecycleObserverRegisterCacnellable on LifecycleObserverRegister {
       required FutureOr<T> Function(Cancellable cancellable) block}) {
     Cancellable? cancellable;
     final observer = LifecycleObserver.stateChange((state) {
-      if (state >= targetState && cancellable?.isUnavailable == true) {
+      if (state >= targetState &&
+          (cancellable == null || cancellable?.isUnavailable == true)) {
         cancellable = makeLiveCancellable();
-        block(cancellable!);
+        try {
+          block(cancellable!);
+        } catch (_) {}
       } else if (state < targetState && cancellable?.isAvailable == true) {
         cancellable?.cancel();
         cancellable = null;
       }
     });
     registerLifecycleObserver(observer, fullCycle: true);
+  }
+
+  Stream<T> repeatOnLifecycleCollect<T>(
+      {LifecycleState targetState = LifecycleState.started,
+      required FutureOr<T> Function(Cancellable cancellable) block}) {
+    StreamController<T> controller = StreamController();
+    controller.closeByCancellable(makeLiveCancellable());
+    repeatOnLifecycle(block: (cancellable) async {
+      if (!controller.isClosed) {
+        try {
+          final b = await block(cancellable);
+          controller.add(b);
+        } catch (_) {}
+      }
+    });
+    return controller.stream;
+  }
+}
+
+extension StreamLifecycleExt<T> on Stream<T> {
+  Stream<T> bindLifecycle(LifecycleObserverRegister register,
+      {LifecycleState state = LifecycleState.started,
+      bool repeatLastOnRestart = false}) {
+    StreamTransformer<T, T> transformer;
+    if (repeatLastOnRestart) {
+      T? cache;
+      EventSink<T>? eventSink;
+      transformer =
+          StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
+        if (register.currentLifecycleState >= state) {
+          cache = null;
+          eventSink = null;
+          sink.add(data);
+        } else if (repeatLastOnRestart) {
+          cache = data;
+          eventSink = sink;
+        }
+      });
+      register.repeatOnLifecycle(block: (Cancellable cancellable) {
+        if (cache != null && eventSink != null) {
+          eventSink?.add(cache as T);
+        }
+      });
+    } else {
+      transformer =
+          StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
+        if (register.currentLifecycleState >= state) {
+          sink.add(data);
+        }
+      });
+    }
+
+    return bindCancellable(register.makeLiveCancellable(),
+            closeWhenCancel: false)
+        .transform(transformer);
   }
 }

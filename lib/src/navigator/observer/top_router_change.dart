@@ -1,7 +1,9 @@
+import 'package:aymtools/src/navigator/observer/proxy_observer.dart';
 import 'package:flutter/widgets.dart';
 import 'package:weak_collections/weak_collections.dart';
 
-abstract class NavigatorTopRouteChangeObserver extends NavigatorObserver {
+abstract class NavigatorTopRouteChangeObserver extends NavigatorObserver
+    with ProxyNavigatorObserver {
   @mustCallSuper
   @override
   void didPop(Route route, Route? previousRoute) {
