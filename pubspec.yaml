@@ -16,10 +16,10 @@ dependencies:
   linked_scroll_controller: ^0.2.0
   collection: ^1.17.0
 
-  cancellable: ^1.1.4
+  cancellable: ^1.1.5
   weak_collections: ^1.1.0
   anlifecycle: ^1.0.5
-  isolate_pool_executor: ^1.1.2
+  isolate_pool_executor: ^1.1.3
 
 dev_dependencies:
   flutter_test:

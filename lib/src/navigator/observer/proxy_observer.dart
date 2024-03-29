@@ -1,5 +1,4 @@
 import 'package:aymtools/src/tools/expando_ext.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 
 Expando<Set<ProxyNavigatorObserver>> _proxy = Expando();
@@ -66,6 +65,7 @@ class ProxyManagerNavigatorObserver extends NavigatorObserver {
     } else {
       final observers =
           _proxy.getOrPut(nav, defaultValue: () => <ProxyNavigatorObserver>{});
+      observer._navigatorProxy = nav;
       observers.add(observer);
     }
   }
@@ -91,6 +91,9 @@ class ProxyManagerNavigatorObserver extends NavigatorObserver {
     final observers =
         _proxy.getOrPut(nav, defaultValue: () => <ProxyNavigatorObserver>{});
     if (_willAdd.isNotEmpty) {
+      for (var e in _willAdd) {
+        e._navigatorProxy = nav;
+      }
       observers.addAll(_willAdd);
       _willAdd.clear();
     }
@@ -102,7 +105,8 @@ class ProxyManagerNavigatorObserver extends NavigatorObserver {
 
   Set<ProxyNavigatorObserver>? get _observers {
     final nav = navigator!;
-    return _proxy[nav];
+    final observers = _proxy[nav];
+    return observers == null ? null : Set.of(observers);
   }
 
   static ProxyManagerNavigatorObserver? maybe(
@@ -160,5 +164,5 @@ mixin ProxyNavigatorObserver on NavigatorObserver {
   NavigatorState? _navigatorProxy;
 
   @override
-  NavigatorState? get navigator => super.navigator ?? _navigatorProxy!;
+  NavigatorState? get navigator => super.navigator ?? _navigatorProxy;
 }
