@@ -59,13 +59,13 @@ class ProxyManagerNavigatorObserver extends NavigatorObserver {
 
   void addObserver(ProxyNavigatorObserver observer) {
     final nav = navigator;
-    assert(observer.navigator == null || observer.navigator == navigator);
+    assert(observer.navigator == null || observer.navigator == nav);
     if (nav == null) {
       _willAdd.add(observer);
     } else {
       final observers =
           _proxy.getOrPut(nav, defaultValue: () => <ProxyNavigatorObserver>{});
-      observer._navigatorProxy = nav;
+      observer._navigatorProxy = WeakReference(nav);
       observers.add(observer);
     }
   }
@@ -88,25 +88,33 @@ class ProxyManagerNavigatorObserver extends NavigatorObserver {
       return;
     }
     final nav = navigator!;
+
+    final willAdd = Set<ProxyNavigatorObserver>.of(_willAdd);
+    _willAdd.clear();
+    final willRemove = Set<ProxyNavigatorObserver>.of(_willRemove);
+    _willRemove.clear();
+
     final observers =
         _proxy.getOrPut(nav, defaultValue: () => <ProxyNavigatorObserver>{});
-    if (_willAdd.isNotEmpty) {
-      for (var e in _willAdd) {
-        e._navigatorProxy = nav;
-      }
-      observers.addAll(_willAdd);
-      _willAdd.clear();
+    if (willAdd.isNotEmpty) {
+      observers.addAll(willAdd);
     }
-    if (_willRemove.isNotEmpty) {
-      observers.removeAll(_willRemove);
-      _willRemove.clear();
+    if (willRemove.isNotEmpty) {
+      observers.removeAll(willRemove);
     }
   }
 
   Set<ProxyNavigatorObserver>? get _observers {
     final nav = navigator!;
     final observers = _proxy[nav];
-    return observers == null ? null : Set.of(observers);
+    if (observers != null) {
+      final result = Set<ProxyNavigatorObserver>.of(observers);
+      for (var observer in result) {
+        observer._navigatorProxy = WeakReference(nav);
+      }
+      return result;
+    }
+    return null;
   }
 
   static ProxyManagerNavigatorObserver? maybe(
@@ -161,8 +169,8 @@ class ProxyManagerNavigatorObserver extends NavigatorObserver {
 }
 
 mixin ProxyNavigatorObserver on NavigatorObserver {
-  NavigatorState? _navigatorProxy;
+  WeakReference<NavigatorState>? _navigatorProxy;
 
   @override
-  NavigatorState? get navigator => super.navigator ?? _navigatorProxy;
+  NavigatorState? get navigator => super.navigator ?? _navigatorProxy?.target;
 }

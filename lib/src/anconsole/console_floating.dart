@@ -42,7 +42,10 @@ class _ConsoleFloatingButton extends StatelessWidget {
         valueListenable: toolsStatus,
         builder: (context, value, child) {
           return value != true
-              ? const Material(child: SizedBox.shrink())
+              ? const Material(
+                  type: MaterialType.transparency,
+                  child: SizedBox.shrink(),
+                )
               : child!;
         },
         child: SizedBox(
