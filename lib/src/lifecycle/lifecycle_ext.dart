@@ -66,12 +66,16 @@ extension LifecycleObserverRegisterCacnellable on LifecycleObserverRegister {
       {LifecycleState targetState = LifecycleState.started,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
     Cancellable? cancellable;
-    final observer = LifecycleObserver.stateChange((state) {
+    final observer = LifecycleObserver.stateChange((state) async {
       if (state >= targetState &&
           (cancellable == null || cancellable?.isUnavailable == true)) {
         cancellable = makeLiveCancellable();
         try {
-          block(cancellable!);
+          final result = block(cancellable!);
+          if (result is Future<T>) {
+            await Future.delayed(Duration.zero);
+            if (cancellable?.isAvailable == true) await result;
+          }
         } catch (_) {}
       } else if (state < targetState && cancellable?.isAvailable == true) {
         cancellable?.cancel();
@@ -81,19 +85,37 @@ extension LifecycleObserverRegisterCacnellable on LifecycleObserverRegister {
     registerLifecycleObserver(observer, fullCycle: true);
   }
 
-  Stream<T> repeatOnLifecycleCollect<T>(
+  Stream<T> collectOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
     StreamController<T> controller = StreamController();
-    controller.closeByCancellable(makeLiveCancellable());
-    repeatOnLifecycle(block: (cancellable) async {
-      if (!controller.isClosed) {
+    controller.bindCancellable(makeLiveCancellable());
+
+    Cancellable? cancellable;
+    final observer = LifecycleObserver.stateChange((state) async {
+      if (state >= targetState &&
+          (cancellable == null || cancellable?.isUnavailable == true)) {
+        cancellable = makeLiveCancellable();
         try {
-          final b = await block(cancellable);
-          controller.add(b);
+          final result = block(cancellable!);
+          if (result is Future<T>) {
+            await Future.delayed(Duration.zero);
+            if (cancellable?.isAvailable == true) {
+              final r = await result;
+              if (cancellable?.isAvailable == true) controller.add(r);
+            }
+          } else {
+            controller.add(result);
+          }
         } catch (_) {}
+      } else if (state < targetState && cancellable?.isAvailable == true) {
+        cancellable?.cancel();
+        cancellable = null;
       }
     });
+
+    registerLifecycleObserver(observer, fullCycle: true);
+
     return controller.stream;
   }
 }
