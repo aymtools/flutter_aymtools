@@ -1,6 +1,8 @@
 name: aymtools
-description: A common scaffolding for rapid development of flutter.
-version: 1.0.0
+description: A commonly used toolkit in Flutter.
+  Intended to make Flutter development more convenient. 
+  It includes a programmable floating console, some Listenable toolkits, data loaders, convenient toast displays, and some commonly used extensions.
+version: 1.0.0-dev.1
 homepage: https://github.com/aymtools/flutter_aymtools/
 
 environment:
