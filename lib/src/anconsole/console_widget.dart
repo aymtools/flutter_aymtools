@@ -180,43 +180,64 @@ class _ConsoleRouteManager with ChangeNotifier {
     return route.completer.future.then((value) => value ?? false);
   }
 
-  Future<T?> showOptionSelect<T>({
+  Future<T> showOptionSelect<T>({
     String? title,
     required List<T> options,
     required String Function(T option) displayToStr,
     T? selected,
+    String? cancel,
   }) {
     assert(options.isNotEmpty);
+
     late final _ConsoleRouteBottomSheet<T> route;
+    Widget content = ListView.builder(
+      itemCount: options.length,
+      itemBuilder: (_, index) => ListTile(
+        onTap: () {
+          removeRoute(route);
+          route.completer.complete(options[index]);
+        },
+        leading: Icon(
+          options[index] == selected
+              ? Icons.check_box_outlined
+              : Icons.check_box_outline_blank,
+          color: options[index] == selected ? Colors.blue : null,
+        ),
+        title: Text(displayToStr(options[index])),
+      ),
+    );
+    if (cancel?.isNotEmpty == true) {
+      content = Column(
+        children: [
+          Expanded(child: content),
+          SafeArea(
+            top: false,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+              child: OutlinedButton(
+                onPressed: () => removeRoute(route),
+                child: Text(cancel!),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     route = _ConsoleRouteBottomSheet(
         title: title == null || title.isEmpty ? null : Text(title, maxLines: 1),
         content: Expanded(
-          child: ListView.builder(
-            itemCount: options.length,
-            itemBuilder: (_, index) => ListTile(
-              onTap: () {
-                removeRoute(route);
-                route.completer.complete(options[index]);
-              },
-              leading: Transform.rotate(
-                angle: pi / 4,
-                child: Icon(
-                  Icons.add,
-                  color: options[index] == selected ? Colors.blue : null,
-                ),
-              ),
-              title: Text(displayToStr(options[index])),
-            ),
-          ),
+          child: content,
         ),
         onDismiss: () {
           removeRoute(route);
         });
     addRoute(route);
-    return route.completer.future.then((value) => value ?? selected);
+    return route.completer.future.then<T>((value) => value!);
   }
 
-  Future<List<T>?> showOptionMultiSelect<T>({
+  Future<List<T>> showOptionMultiSelect<T>({
     String? title,
     required List<T> options,
     required String Function(T option) displayToStr,
@@ -246,7 +267,7 @@ class _ConsoleRouteManager with ChangeNotifier {
           removeRoute(route);
         });
     addRoute(route);
-    return route.completer.future.then((value) => value ?? selected);
+    return route.completer.future.then((value) => value ?? selected ?? <T>[]);
   }
 }
 
@@ -445,7 +466,7 @@ class _BaseRouteDialogWidget extends StatelessWidget {
     final theme = Theme.of(context);
 
     final TextStyle? defaultTitleStyle = theme.useMaterial3
-        ? theme.textTheme.headlineSmall
+        ? theme.textTheme.headlineMedium
         : theme.textTheme.titleLarge;
 
     final titleStyle = theme.dialogTheme.titleTextStyle ?? defaultTitleStyle;
@@ -582,7 +603,7 @@ class _ConsoleRouteBottomSheetWidget extends StatelessWidget {
           child: Container(
             constraints: BoxConstraints(
               minHeight: 100,
-              maxHeight: size.height / 2,
+              maxHeight: size.height * 2 / 3,
             ),
             width: double.infinity,
             color: backgroundColor,
@@ -631,27 +652,33 @@ class _OptionMultiSelectState<T> extends State<_OptionMultiSelect<T>> {
                 return ListTile(
                   onTap: () {
                     if (selected.contains(data)) {
-                      selected.add(data);
-                    } else {
                       selected.remove(data);
+                    } else {
+                      selected.add(data);
                     }
                     setState(() {});
                   },
-                  leading: Transform.rotate(
-                    angle: pi / 4,
-                    child: Icon(
-                      Icons.add,
-                      color: selected.contains(data) ? Colors.blue : null,
-                    ),
+                  leading: Icon(
+                    selected.contains(data)
+                        ? Icons.check_box_outlined
+                        : Icons.check_box_outline_blank,
+                    color: selected.contains(data) ? Colors.blue : null,
                   ),
                   title: Text(widget.displayToStr(data)),
                 );
               },
             ),
           ),
-          ElevatedButton(
-            onPressed: () => widget.confirm(selected.toList()),
-            child: Text(widget.confirmLabel),
+          SafeArea(
+            top: false,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: ElevatedButton(
+                onPressed: () => widget.confirm(selected.toList()),
+                child: Text(widget.confirmLabel),
+              ),
+            ),
           ),
         ],
       ),

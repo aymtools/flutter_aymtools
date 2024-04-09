@@ -47,16 +47,18 @@ class _FloatingDraggableButtonState extends State<FloatingDraggableButton> {
             ? Offset(parentSize.width, parentSize.height)
             : Offset(parentSize.width - currSize.width,
                 parentSize.height - currSize.height);
-        if (_offset == Offset.zero &&
-            widget.initOffset == null &&
-            currSize != null) {
-          final paddingRight = MediaQuery.of(context).padding.right;
-          _offset = Offset(parentSize.width - currSize.width - paddingRight,
-              parentSize.height * 3 / 5);
+        if (currSize != null) {
+          if ((_offset == Offset.zero && widget.initOffset == null) ||
+              (_offset.dx > parentSize.width ||
+                  _offset.dy > parentSize.height)) {
+            final paddingRight = MediaQuery.of(context).padding.right;
+            _offset = Offset(parentSize.width - currSize.width - paddingRight,
+                parentSize.height * 3 / 5);
+          }
+          setState(() {
+            _maxOffset = size;
+          });
         }
-        setState(() {
-          _maxOffset = size;
-        });
       } catch (e, st) {}
     }
 
@@ -75,6 +77,16 @@ class _FloatingDraggableButtonState extends State<FloatingDraggableButton> {
         _offset = Offset(w, h);
       });
     });
+  }
+
+  void _updateMax() {
+    final parentSize = WidgetsBinding.instance.renderView.size;
+    final currSize = _key.currentContext?.size;
+    final Offset size = currSize == null
+        ? Offset(parentSize.width, parentSize.height)
+        : Offset(parentSize.width - currSize.width,
+            parentSize.height - currSize.height);
+    _maxOffset = size;
   }
 
   void _updatePosition(Offset move) {
@@ -109,6 +121,7 @@ class _FloatingDraggableButtonState extends State<FloatingDraggableButton> {
         onPointerDown: (event) {
           _offsetDown = event.position;
           lastDown = DateTime.now().millisecondsSinceEpoch;
+          _updateMax();
         },
         onPointerMove: (event) {
           if (_offsetDown == null) return;

@@ -109,19 +109,21 @@ class AnConsole {
   static void showToast(String message) =>
       _ConsoleToastQueue.instance.showToast(message);
 
-  static Future<T?> showOptionSelect<T>({
+  static Future<T> showOptionSelect<T>({
     String? title,
     required List<T> options,
     required String Function(T option) displayToStr,
     T? selected,
+    String? cancel,
   }) =>
       _ConsoleRouteManager._instance.showOptionSelect(
           title: title,
           options: options,
           displayToStr: displayToStr,
-          selected: selected);
+          selected: selected,
+          cancel: cancel);
 
-  static Future<List<T>?> showOptionMultiSelect<T>({
+  static Future<List<T>> showOptionMultiSelect<T>({
     String? title,
     required List<T> options,
     required String Function(T option) displayToStr,
