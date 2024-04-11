@@ -4,6 +4,30 @@ import 'package:anlifecycle/anlifecycle.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/material.dart';
 
+abstract class _LifecycleEventObserverWrapper
+    implements LifecycleEventObserver {
+  @override
+  void onAnyEvent(LifecycleOwner owner, LifecycleEvent event) {}
+
+  @override
+  void onCreate(LifecycleOwner owner) {}
+
+  @override
+  void onDestroy(LifecycleOwner owner) {}
+
+  @override
+  void onPause(LifecycleOwner owner) {}
+
+  @override
+  void onResume(LifecycleOwner owner) {}
+
+  @override
+  void onStart(LifecycleOwner owner) {}
+
+  @override
+  void onStop(LifecycleOwner owner) {}
+}
+
 extension LifecycleObserverRegisterX on LifecycleObserverRegister {
   Future<LifecycleState> whenMoreThanState(LifecycleState state) =>
       currentLifecycleState >= LifecycleState.started
@@ -34,7 +58,7 @@ extension LifecycleObserverRegisterMixinContextExt
 
 final Map<LifecycleObserverRegister, _CacheMapObserver> _map = {};
 
-class _CacheMapObserver with LifecycleEventDefaultObserver {
+class _CacheMapObserver with _LifecycleEventObserverWrapper {
   final Cancellable _cancellable;
   final LifecycleObserverRegister registerMixin;
 
