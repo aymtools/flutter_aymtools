@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+part 'strm_ext.dart';
+
 class _Token<T> {
   Type typeOf() => T;
 
@@ -479,25 +481,15 @@ class StrmBuilder<T> extends StreamBuilderBase<T, AsyncSnapshot<T>> {
   static const StrmBuilderWithListenableCompanion withListenable =
       StrmBuilderWithListenableCompanion._();
 
-  static const StrmBuilderLoadingCompanion loader =
-      StrmBuilderLoadingCompanion._();
+  static const StrmBuilderLoaderCompanion loader =
+      StrmBuilderLoaderCompanion._();
 
   static const StrmBuilderUpdatingCompanion updater =
       StrmBuilderUpdatingCompanion._();
 }
 
-class Strm {
-  const Strm._();
-
-  static const StrmBuilderLoadingCompanion loader =
-      StrmBuilderLoadingCompanion._();
-
-  static const StrmBuilderUpdatingCompanion updater =
-      StrmBuilderUpdatingCompanion._();
-}
-
-class StrmBuilderLoadingCompanion {
-  const StrmBuilderLoadingCompanion._();
+class StrmBuilderLoaderCompanion {
+  const StrmBuilderLoaderCompanion._();
 }
 
 class StrmBuilderUpdatingCompanion {
@@ -507,6 +499,3 @@ class StrmBuilderUpdatingCompanion {
 class StrmBuilderWithListenableCompanion {
   const StrmBuilderWithListenableCompanion._();
 }
-
-extension StrmBuilderWithListenableCompanionExt
-    on StrmBuilderWithListenableCompanion {}
