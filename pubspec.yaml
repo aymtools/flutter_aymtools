@@ -15,8 +15,10 @@ dependencies:
 
   async: ^2.9.0
   shared_preferences: ^2.1.1
-  linked_scroll_controller: ^0.2.0
   collection: ^1.17.0
+  intl: ^0.18.1
+
+  linked_scroll_controller: ^0.2.0
 
   cancellable: ^1.1.5
   weak_collections: ^1.1.0
