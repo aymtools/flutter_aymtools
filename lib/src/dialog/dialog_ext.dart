@@ -149,42 +149,42 @@ Future<T?> showCModalBottomSheet<T>({
   return navigator.pushCancellableRoute(route, cancellable);
 }
 
-PersistentBottomSheetController<T> showCBottomSheet<T>({
-  required BuildContext context,
-  required WidgetBuilder builder,
-  Cancellable? cancellable,
-  Color? backgroundColor,
-  double? elevation,
-  ShapeBorder? shape,
-  Clip? clipBehavior,
-  BoxConstraints? constraints,
-  bool? enableDrag,
-  AnimationController? transitionAnimationController,
-}) {
-  assert(debugCheckHasScaffold(context));
-
-  final result = Scaffold.of(context).showBottomSheet<T>(
-    builder,
-    backgroundColor: backgroundColor,
-    elevation: elevation,
-    shape: shape,
-    clipBehavior: clipBehavior,
-    constraints: constraints,
-    enableDrag: enableDrag,
-    transitionAnimationController: transitionAnimationController,
-  );
-  if (cancellable != null) {
-    final Cancellable showing = Cancellable();
-
-    cancellable.onCancel
-        .bindCancellable(showing)
-        .then((value) => result.close());
-    showing.onCancel.then((value) => cancellable.cancel());
-
-    result.closed.then((value) => showing.cancel());
-  }
-  return result;
-}
+// PersistentBottomSheetController<T> showCBottomSheet<T>({
+//   required BuildContext context,
+//   required WidgetBuilder builder,
+//   Cancellable? cancellable,
+//   Color? backgroundColor,
+//   double? elevation,
+//   ShapeBorder? shape,
+//   Clip? clipBehavior,
+//   BoxConstraints? constraints,
+//   bool? enableDrag,
+//   AnimationController? transitionAnimationController,
+// }) {
+//   assert(debugCheckHasScaffold(context));
+//
+//   final result = Scaffold.of(context).showBottomSheet<T>(
+//     builder,
+//     backgroundColor: backgroundColor,
+//     elevation: elevation,
+//     shape: shape,
+//     clipBehavior: clipBehavior,
+//     constraints: constraints,
+//     enableDrag: enableDrag,
+//     transitionAnimationController: transitionAnimationController,
+//   );
+//   if (cancellable != null) {
+//     final Cancellable showing = Cancellable();
+//
+//     cancellable.onCancel
+//         .bindCancellable(showing)
+//         .then((value) => result.close());
+//     showing.onCancel.then((value) => cancellable.cancel());
+//
+//     result.closed.then((value) => showing.cancel());
+//   }
+//   return result;
+// }
 
 void showCAboutDialog({
   required BuildContext context,

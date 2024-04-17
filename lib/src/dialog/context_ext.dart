@@ -118,29 +118,29 @@ extension BuildContextDialogCancellable on BuildContext {
         anchorPoint: anchorPoint,
       );
 
-  PersistentBottomSheetController<T> showCBottomSheet<T>({
-    required WidgetBuilder builder,
-    Cancellable? cancellable,
-    Color? backgroundColor,
-    double? elevation,
-    ShapeBorder? shape,
-    Clip? clipBehavior,
-    BoxConstraints? constraints,
-    bool? enableDrag,
-    AnimationController? transitionAnimationController,
-  }) =>
-      d.showCBottomSheet(
-        context: this,
-        builder: builder,
-        cancellable: cancellable,
-        backgroundColor: backgroundColor,
-        elevation: elevation,
-        shape: shape,
-        clipBehavior: clipBehavior,
-        constraints: constraints,
-        enableDrag: enableDrag,
-        transitionAnimationController: transitionAnimationController,
-      );
+  // PersistentBottomSheetController<T> showCBottomSheet<T>({
+  //   required WidgetBuilder builder,
+  //   Cancellable? cancellable,
+  //   Color? backgroundColor,
+  //   double? elevation,
+  //   ShapeBorder? shape,
+  //   Clip? clipBehavior,
+  //   BoxConstraints? constraints,
+  //   bool? enableDrag,
+  //   AnimationController? transitionAnimationController,
+  // }) =>
+  //     d.showCBottomSheet(
+  //       context: this,
+  //       builder: builder,
+  //       cancellable: cancellable,
+  //       backgroundColor: backgroundColor,
+  //       elevation: elevation,
+  //       shape: shape,
+  //       clipBehavior: clipBehavior,
+  //       constraints: constraints,
+  //       enableDrag: enableDrag,
+  //       transitionAnimationController: transitionAnimationController,
+  //     );
 
   void showCAboutDialog({
     Cancellable? cancellable,
