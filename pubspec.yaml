@@ -13,10 +13,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  async: ^2.9.0
-  shared_preferences: ^2.1.1
-  collection: ^1.17.0
-  intl: ^0.18.1
+  async: any
+  shared_preferences: any
+  collection: any
+  intl: any
 
   linked_scroll_controller: ^0.2.0
 
