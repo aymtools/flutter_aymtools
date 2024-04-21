@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'interceptor_navigator.dart';
 
+part 'an_router_delegate.dart';
+
 typedef PageCreator = Widget Function(BuildContext context, Object? argments);
 
 typedef OnGeneratePage = Widget? Function(String name, Object? arguments);
