@@ -20,7 +20,7 @@ dependencies:
 
   linked_scroll_controller: ^0.2.0
 
-  cancellable: ^1.1.5
+  cancellable: ^2.0.0
   weak_collections: ^1.1.0
   anlifecycle: ^1.0.5
   isolate_pool_executor: ^1.1.4

@@ -1,14 +1,14 @@
 part of 'console.dart';
 
 class _OnBackPressedDispatcher with WidgetsBindingObserver {
-  WillPopCallback? _willPop;
-  final List<WillPopCallback> _willPops = [];
+  Future<bool> Function()? _willPop;
+  final List<Future<bool> Function()> _willPops = [];
 
-  void addWillPopCallback(WillPopCallback callback) {
+  void addWillPopCallback(Future<bool> Function() callback) {
     _willPops.add(callback);
   }
 
-  void removerWillPopCallback(WillPopCallback callback) {
+  void removerWillPopCallback(Future<bool> Function() callback) {
     _willPops.remove(callback);
   }
 
