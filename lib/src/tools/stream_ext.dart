@@ -55,6 +55,6 @@ extension StreamToolsExt<T> on Stream<T> {
       controller.onCancel = () {
         currentListeners.remove(controller);
       };
-    });
+    }, isBroadcast: isBroadcast);
   }
 }
