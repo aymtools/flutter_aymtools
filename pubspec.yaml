@@ -24,7 +24,7 @@ dependencies:
 
   cancellable: ^2.0.0
   weak_collections: ^1.1.0
-  anlifecycle: ^1.0.5
+  anlifecycle: ^2.0.0
   isolate_pool_executor: ^1.2.0
 
 dev_dependencies:
