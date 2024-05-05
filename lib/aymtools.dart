@@ -36,6 +36,7 @@ export 'src/widgets/widget_ext.dart';
 export 'src/widgets/sliver_ext.dart';
 export 'src/widgets/change_notifier_builder.dart';
 export 'src/widgets/multi_child_separated.dart';
+export 'src/widgets/listenable_builder.dart';
 
 export 'src/strm_builder/strm_builder.dart';
 

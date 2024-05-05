@@ -28,7 +28,7 @@ abstract class _LifecycleEventObserverWrapper
   void onStop(LifecycleOwner owner) {}
 }
 
-extension LifecycleObserverRegisterX on LifecycleObserverRegister {
+extension LifecycleObserverRegistryX on LifecycleObserverRegistry {
   Future<LifecycleState> whenMoreThanState(LifecycleState state) =>
       currentLifecycleState >= LifecycleState.started
           ? Future.value(currentLifecycleState)
@@ -43,8 +43,8 @@ extension LifecycleObserverRegisterX on LifecycleObserverRegister {
           .then((value) => LifecycleEvent.resume);
 }
 
-extension LifecycleObserverRegisterMixinContextExt
-    on LifecycleObserverRegisterMixin {
+extension LifecycleObserverRegistryMixinContextExt
+    on LifecycleObserverRegistryMixin {
   Future<BuildContext> get requiredContext =>
       whenMoreThanState(LifecycleState.started).then((_) => context);
 
@@ -56,17 +56,17 @@ extension LifecycleObserverRegisterMixinContextExt
       });
 }
 
-final Map<LifecycleObserverRegister, _CacheMapObserver> _map = {};
+final Map<LifecycleObserverRegistry, _CacheMapObserver> _map = {};
 
 class _CacheMapObserver with _LifecycleEventObserverWrapper {
   final Cancellable _cancellable;
-  final LifecycleObserverRegister registerMixin;
+  final LifecycleObserverRegistry registryMixin;
 
   Cancellable _makeCancellableForLive({Cancellable? other}) =>
       _cancellable.makeCancellable(infectious: false, father: other);
 
-  _CacheMapObserver(this.registerMixin) : _cancellable = Cancellable() {
-    registerMixin.registerLifecycleObserver(this, fullCycle: true);
+  _CacheMapObserver(this.registryMixin) : _cancellable = Cancellable() {
+    registryMixin.addLifecycleObserver(this, fullCycle: true);
     _cancellable.onCancel.then((value) => _map.remove(this));
   }
 
@@ -77,7 +77,7 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
   }
 }
 
-extension LifecycleObserverRegisterCacnellable on LifecycleObserverRegister {
+extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
   Cancellable makeLiveCancellable({Cancellable? other}) {
     assert(
         currentLifecycleState > LifecycleState.destroyed, '必须在destroyed之前使用');
@@ -106,7 +106,7 @@ extension LifecycleObserverRegisterCacnellable on LifecycleObserverRegister {
         cancellable = null;
       }
     });
-    registerLifecycleObserver(observer, fullCycle: true);
+    addLifecycleObserver(observer, fullCycle: true);
   }
 
   Stream<T> collectOnLifecycle<T>(
@@ -138,14 +138,14 @@ extension LifecycleObserverRegisterCacnellable on LifecycleObserverRegister {
       }
     });
 
-    registerLifecycleObserver(observer, fullCycle: true);
+    addLifecycleObserver(observer, fullCycle: true);
 
     return controller.stream;
   }
 }
 
 extension StreamLifecycleExt<T> on Stream<T> {
-  Stream<T> bindLifecycle(LifecycleObserverRegister register,
+  Stream<T> bindLifecycle(LifecycleObserverRegistry registry,
       {LifecycleState state = LifecycleState.started,
       bool repeatLastOnRestart = false}) {
     StreamTransformer<T, T> transformer;
@@ -154,7 +154,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
       EventSink<T>? eventSink;
       transformer =
           StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
-        if (register.currentLifecycleState >= state) {
+        if (registry.currentLifecycleState >= state) {
           cache = null;
           eventSink = null;
           sink.add(data);
@@ -163,7 +163,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
           eventSink = sink;
         }
       });
-      register.repeatOnLifecycle(block: (Cancellable cancellable) {
+      registry.repeatOnLifecycle(block: (Cancellable cancellable) {
         if (cache != null && eventSink != null) {
           eventSink?.add(cache as T);
         }
@@ -171,13 +171,13 @@ extension StreamLifecycleExt<T> on Stream<T> {
     } else {
       transformer =
           StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
-        if (register.currentLifecycleState >= state) {
+        if (registry.currentLifecycleState >= state) {
           sink.add(data);
         }
       });
     }
 
-    return bindCancellable(register.makeLiveCancellable(),
+    return bindCancellable(registry.makeLiveCancellable(),
             closeWhenCancel: false)
         .transform(transformer);
   }

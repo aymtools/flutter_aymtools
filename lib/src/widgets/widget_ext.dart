@@ -8,8 +8,8 @@ mixin CancellableState<W extends StatefulWidget> on State<W> {
   Cancellable? _base;
 
   Cancellable makeCancellable({Cancellable? father}) {
-    _base ??= this is LifecycleObserverRegisterMixin
-        ? (this as LifecycleObserverRegisterMixin).makeLiveCancellable()
+    _base ??= this is LifecycleObserverRegistry
+        ? (this as LifecycleObserverRegistry).makeLiveCancellable()
         : Cancellable();
     return _base!.makeCancellable(father: father);
   }

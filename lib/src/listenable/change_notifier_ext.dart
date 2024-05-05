@@ -52,9 +52,9 @@ extension ListenableCancellable on Listenable {
 }
 
 extension ChangeNotifierCancellable on ChangeNotifier {
-  void disposeByCancellable(Cancellable cancellable) {
-    cancellable.onCancel.then((_) => dispose());
-  }
+  @Deprecated('use bindCancellable')
+  void disposeByCancellable(Cancellable cancellable) =>
+      bindCancellable(cancellable);
 
   void bindCancellable(Cancellable cancellable) {
     cancellable.onCancel.then((_) => dispose());
