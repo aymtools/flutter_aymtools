@@ -88,6 +88,7 @@ extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
 
   void repeatOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
+      bool runWithDelayed = false,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
     Cancellable? cancellable;
     final observer = LifecycleObserver.stateChange((state) async {
@@ -95,6 +96,11 @@ extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
           (cancellable == null || cancellable?.isUnavailable == true)) {
         cancellable = makeLiveCancellable();
         try {
+          if (runWithDelayed) {
+            //转到下一个事件循环，可以过滤掉连续的状态变化
+            await Future.delayed(Duration.zero);
+            if (cancellable!.isUnavailable) return;
+          }
           final result = block(cancellable!);
           if (result is Future<T>) {
             await Future.delayed(Duration.zero);
@@ -111,6 +117,7 @@ extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
 
   Stream<T> collectOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
+      bool runWithDelayed = false,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
     StreamController<T> controller = StreamController();
     controller.bindCancellable(makeLiveCancellable());
@@ -121,6 +128,11 @@ extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
           (cancellable == null || cancellable?.isUnavailable == true)) {
         cancellable = makeLiveCancellable();
         try {
+          if (runWithDelayed) {
+            //转到下一个事件循环，可以过滤掉连续的状态变化
+            await Future.delayed(Duration.zero);
+            if (cancellable!.isUnavailable) return;
+          }
           final result = block(cancellable!);
           if (result is Future<T>) {
             await Future.delayed(Duration.zero);
@@ -163,13 +175,15 @@ extension StreamLifecycleExt<T> on Stream<T> {
           eventSink = sink;
         }
       });
-      registry.repeatOnLifecycle(block: (Cancellable cancellable) {
-        if (cache != null && eventSink != null) {
-          eventSink?.add(cache as T);
-          eventSink = null;
-          cache = null;
-        }
-      });
+      registry.repeatOnLifecycle(
+          targetState: state,
+          block: (Cancellable cancellable) {
+            if (cache != null && eventSink != null) {
+              eventSink?.add(cache as T);
+              eventSink = null;
+              cache = null;
+            }
+          });
     } else {
       transformer =
           StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
