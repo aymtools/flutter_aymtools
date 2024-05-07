@@ -158,7 +158,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
           cache = null;
           eventSink = null;
           sink.add(data);
-        } else if (repeatLastOnRestart) {
+        } else {
           cache = data;
           eventSink = sink;
         }
@@ -166,6 +166,8 @@ extension StreamLifecycleExt<T> on Stream<T> {
       registry.repeatOnLifecycle(block: (Cancellable cancellable) {
         if (cache != null && eventSink != null) {
           eventSink?.add(cache as T);
+          eventSink = null;
+          cache = null;
         }
       });
     } else {

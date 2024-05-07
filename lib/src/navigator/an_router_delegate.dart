@@ -1,5 +1,7 @@
 part of 'an_navigator.dart';
 
+final GlobalKey<NavigatorState> _navigatorPrimaryKey = GlobalKey();
+
 class AnRouterDelegate extends RouterDelegate<RouteSettings>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin<RouteSettings> {
   final List<Page<dynamic>> pages;
@@ -29,9 +31,10 @@ class AnRouterDelegate extends RouterDelegate<RouteSettings>
 
   final OnGeneratePushPageInterceptor? onGeneratePushPageInterceptor;
 
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey();
+  final GlobalKey<NavigatorState> _navigatorKey;
 
   AnRouterDelegate({
+    GlobalKey<NavigatorState>? navigatorKey,
     this.pages = const <Page<dynamic>>[],
     this.transitionDelegate = const DefaultTransitionDelegate<dynamic>(),
     this.initialRoute,
@@ -49,7 +52,7 @@ class AnRouterDelegate extends RouterDelegate<RouteSettings>
     this.onPageConvertToRoute = _onPageConvertToRoute,
     this.onGenerateRoute,
     this.onGeneratePushPageInterceptor,
-  });
+  }) : _navigatorKey = navigatorKey ?? _navigatorPrimaryKey;
 
   @override
   GlobalKey<NavigatorState> get navigatorKey => _navigatorKey;
@@ -57,7 +60,7 @@ class AnRouterDelegate extends RouterDelegate<RouteSettings>
   @override
   Widget build(BuildContext context) {
     return AnNavigator(
-      key: _navigatorKey,
+      key: navigatorKey,
       pages: pages,
       transitionDelegate: transitionDelegate,
       initialRoute: initialRoute,
