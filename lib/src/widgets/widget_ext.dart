@@ -1,9 +1,10 @@
 import 'dart:core';
+import 'package:an_lifecycle_cancellable/an_lifecycle_cancellable.dart';
 import 'package:anlifecycle/anlifecycle.dart';
-import 'package:aymtools/src/lifecycle/lifecycle_ext.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/widgets.dart';
 
+@Deprecated('Use package:ffx XState')
 mixin CancellableState<W extends StatefulWidget> on State<W> {
   Cancellable? _base;
 

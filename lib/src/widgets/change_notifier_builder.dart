@@ -1,7 +1,8 @@
 import 'package:aymtools/src/listenable/change_notifier_ext.dart';
-import 'package:aymtools/src/widgets/widget_ext.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/widgets.dart';
+
+import 'widget_ext.dart';
 
 class ChangeNotifierBuilder<T extends ChangeNotifier> extends StatefulWidget {
   final T changeNotifier;

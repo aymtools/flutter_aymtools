@@ -1,7 +1,7 @@
 name: aymtools
-description: A commonly used toolkit in Flutter.
-  Intended to make Flutter development more convenient. 
-  It includes a programmable floating console, some Listenable toolkits, data loaders, convenient toast displays, and some commonly used extensions.
+description: "A commonly used toolkit in Flutter.
+  Intended to make Flutter development more convenient.
+  It includes a programmable floating console, some Listenable toolkits, data loaders, convenient toast displays, and some commonly used extensions."
 version: 1.0.0-dev.4
 homepage: https://github.com/aymtools/flutter_aymtools/
 
@@ -10,6 +10,12 @@ environment:
   flutter: ">=3.0.0"
 
 dependency_overrides:
+#  anlifecycle:
+#    path: ../lifecycle
+#  an_lifecycle_cancellable:
+#    path: ../lifecycle_cancellable
+#  ffx:
+#    path: ../fx
 
 dependencies:
   flutter:
@@ -24,8 +30,11 @@ dependencies:
 
   cancellable: ^2.0.0
   weak_collections: ^1.1.0
-  anlifecycle: ^2.0.0
+  anlifecycle: ^2.0.1
   isolate_pool_executor: ^1.2.0
+  an_lifecycle_cancellable: ^0.0.2
+
+#  ffx: ^0.0.1
 
 dev_dependencies:
   flutter_test:

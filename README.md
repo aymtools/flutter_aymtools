@@ -9,15 +9,11 @@ toast displays, and some commonly used extensions.
 
 ### Undoable dialog
 
-### Extension of the association between lifecycle in Flutter and 'cancellable'.
-
 ### A dynamically changing loader
 
 ### Navigator with interception functionality and related extensions
 
 ### A customizable toast similar to Android's
-
-### Other extensions related to 'cancellable' in Flutter
 
 See [example](https://github.com/aymtools/flutter_aymtools/blob/master/example/) for detailed test
 case.
