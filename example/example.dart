@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
         ),
         navigatorObservers: [
           LifecycleNavigatorObserver(),
-          AnConsole.instance.navigatorObserver,
+          // AnConsole.instance.navigatorObserver,
         ],
         routes: routes.map(
           (key, value) => MapEntry(

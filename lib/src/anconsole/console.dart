@@ -1,17 +1,14 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:aymtools/src/floating/draggable.dart';
-import 'package:aymtools/src/navigator/observer/top_router_change.dart';
-import 'package:aymtools/src/widgets/change_notifier_builder.dart';
-import 'package:aymtools/src/widgets/multi_child_separated.dart';
 import 'package:flutter/material.dart';
 
-import '../navigator/observer/proxy_observer.dart';
+import 'widget/draggable.dart';
+import 'widget/change_notifier_builder.dart';
 import 'console_theater.dart';
 
 part 'console_floating.dart';
 
-part 'console_navigator_observer.dart';
+part 'console_on_back_pressed.dart';
 
 part 'console_toast.dart';
 
@@ -28,36 +25,36 @@ class AnConsole {
 
   ConsoleOverlayController? _overlayController;
 
-  // final List<_ConsoleRoute> _consoleRoute = [];
-  // final List<RoutePredicate> _doNotShowUp = [];
-
-  late final ConsoleNavigatorObserver _consoleObserver =
-      ConsoleNavigatorObserver._instance;
+  // late final ConsoleNavigatorObserver _consoleObserver =
+  //     ConsoleNavigatorObserver._instance;
 
   late final _OnBackPressedDispatcher _onBackPressedDispatcher =
       _hookedOnBackPressedDispatcher!;
 
-  late final ProxyManagerNavigatorObserver _navigatorObserver =
-      ProxyManagerNavigatorObserver()..addObserver(_consoleObserver);
+  // late final ProxyManagerNavigatorObserver _navigatorObserver =
+  //     ProxyManagerNavigatorObserver()..addObserver(_consoleObserver);
 
-  ProxyManagerNavigatorObserver get navigatorObserver {
-    _hookOnBackPressed();
-    return _navigatorObserver;
-  }
+  // ProxyManagerNavigatorObserver get navigatorObserver {
+  //   _hookOnBackPressed();
+  //   return _navigatorObserver;
+  // }
+
+  final List<_ConsoleRoute> _routes = [];
+
+  NavigatorState? _navigator;
 
   void addConsole(String title, Widget content) {
     _hookOnBackPressed();
     final route =
         _ConsoleRoutePage(title: Text(title, maxLines: 1), content: content);
-    // _consoleRoute.add(route);
-    _consoleObserver._addConsole(route);
+    _routes.add(route);
   }
 
-  void addNotShowUpRoute(RoutePredicate predicate) {
-    _hookOnBackPressed();
-    // _doNotShowUp.add(predicate);
-    _consoleObserver._fitter.add(predicate);
-  }
+  // void addNotShowUpRoute(RoutePredicate predicate) {
+  //   _hookOnBackPressed();
+  //   // _doNotShowUp.add(predicate);
+  //   _consoleObserver._fitter.add(predicate);
+  // }
 
   bool _isEnable = () {
     bool flag = false;
@@ -86,28 +83,41 @@ class AnConsole {
           return true;
         }());
     }
+    if (_isEnable) {
+      _show();
+    } else {
+      _hide();
+    }
   }
 
-  static Future<T?> push<T>(String title, Widget content) =>
-      _ConsoleRouteManager._instance.push(title, content);
+  static Future<T?> push<T>(String title, Widget content) {
+    _assert();
+    return _ConsoleRouteManager._instance.push(title, content);
+  }
 
-  static void pop([dynamic result]) =>
-      _ConsoleRouteManager._instance.pop(result);
+  static void pop([dynamic result]) {
+    _assert();
+    _ConsoleRouteManager._instance.pop(result);
+  }
 
   static Future<bool> showConfirm({
     String? title,
     required String content,
     String? okLabel,
     String? cancelLabel,
-  }) =>
-      _ConsoleRouteManager._instance.showConfirm(
-          title: title,
-          content: content,
-          okLabel: okLabel,
-          cancelLabel: cancelLabel);
+  }) {
+    _assert();
+    return _ConsoleRouteManager._instance.showConfirm(
+        title: title,
+        content: content,
+        okLabel: okLabel,
+        cancelLabel: cancelLabel);
+  }
 
-  static void showToast(String message) =>
-      _ConsoleToastQueue.instance.showToast(message);
+  static void showToast(String message) {
+    _assert();
+    _ConsoleToastQueue.instance.showToast(message);
+  }
 
   static Future<T> showOptionSelect<T>({
     String? title,
@@ -115,13 +125,15 @@ class AnConsole {
     required String Function(T option) displayToStr,
     T? selected,
     String? cancel,
-  }) =>
-      _ConsoleRouteManager._instance.showOptionSelect(
-          title: title,
-          options: options,
-          displayToStr: displayToStr,
-          selected: selected,
-          cancel: cancel);
+  }) {
+    _assert();
+    return _ConsoleRouteManager._instance.showOptionSelect(
+        title: title,
+        options: options,
+        displayToStr: displayToStr,
+        selected: selected,
+        cancel: cancel);
+  }
 
   static Future<List<T>> showOptionMultiSelect<T>({
     String? title,
@@ -129,13 +141,19 @@ class AnConsole {
     required String Function(T option) displayToStr,
     List<T>? selected,
     String? confirmLabel,
-  }) =>
-      _ConsoleRouteManager._instance.showOptionMultiSelect(
-          title: title,
-          options: options,
-          displayToStr: displayToStr,
-          selected: selected,
-          confirmLabel: confirmLabel);
+  }) {
+    _assert();
+    return _ConsoleRouteManager._instance.showOptionMultiSelect(
+        title: title,
+        options: options,
+        displayToStr: displayToStr,
+        selected: selected,
+        confirmLabel: confirmLabel);
+  }
+
+  static void _assert() {
+    assert(instance.isEnable && instance._navigator != null);
+  }
 }
 
 class ConsoleOverlayController {

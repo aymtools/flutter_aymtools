@@ -150,8 +150,8 @@ class _ConsoleRouteManager with ChangeNotifier {
     String? okLabel,
     String? cancelLabel,
   }) {
-    final MaterialLocalizations localizations = MaterialLocalizations.of(
-        AnConsole.instance.navigatorObserver.navigator!.context);
+    final MaterialLocalizations localizations =
+        MaterialLocalizations.of(AnConsole.instance._navigator!.context);
 
     okLabel ??= localizations.okButtonLabel;
     cancelLabel ??= localizations.cancelButtonLabel;
@@ -245,8 +245,8 @@ class _ConsoleRouteManager with ChangeNotifier {
     String? confirmLabel,
   }) {
     if (confirmLabel == null || confirmLabel.isEmpty) {
-      final MaterialLocalizations localizations = MaterialLocalizations.of(
-          AnConsole.instance.navigatorObserver.navigator!.context);
+      final MaterialLocalizations localizations =
+          MaterialLocalizations.of(AnConsole.instance._navigator!.context);
       confirmLabel = localizations.okButtonLabel;
     }
     assert(options.isNotEmpty);
@@ -355,7 +355,7 @@ class _ConsoleRouteMainWidgetState extends State<_ConsoleRouteMainWidget>
   void initState() {
     super.initState();
 
-    final consoles = ConsoleNavigatorObserver._instance._routes;
+    final consoles = AnConsole.instance._routes;
 
     _lastTabIndex = consoles.length >= _lastTabIndex ? 0 : _lastTabIndex;
 
@@ -507,6 +507,16 @@ class _BaseRouteDialogWidget extends StatelessWidget {
   }
 }
 
+List<Widget> _childList(List<Widget> children, Widget separator) {
+  List<Widget> result = [];
+  for (int i = 0; i < children.length; i++) {
+    result.add(children[i]);
+    result.add(separator);
+  }
+  if (result.isNotEmpty) result.removeLast();
+  return result;
+}
+
 class _ConsoleRouteDialogWidget extends StatelessWidget {
   final _ConsoleRouteDialog route;
 
@@ -540,13 +550,14 @@ class _ConsoleRouteDialogWidget extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: IntrinsicHeight(
-                child: RowSeparated.separatorWidget(
-                  separator: Container(
-                    width: 0.5,
-                    color: Theme.of(context).dividerColor,
+                child: Row(
+                  children: _childList(
+                    route.actions.map((e) => Expanded(child: e)).toList(),
+                    Container(
+                      width: 0.5,
+                      color: Theme.of(context).dividerColor,
+                    ),
                   ),
-                  children:
-                      route.actions.map((e) => Expanded(child: e)).toList(),
                 ),
               ),
             ),

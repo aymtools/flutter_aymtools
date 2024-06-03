@@ -23,6 +23,11 @@ class EventManager<E> with ChangeNotifier {
     _buffer.addFirst(event);
     notifyListeners();
   }
+
+  void clear() {
+    _buffer.clear();
+    notifyListeners();
+  }
 }
 
 class EventManagerConsole<T> extends StatefulWidget {

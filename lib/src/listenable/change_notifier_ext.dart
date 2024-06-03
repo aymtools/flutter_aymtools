@@ -10,7 +10,7 @@ typedef VoidCallBack = void Function();
 class SingleListenerManager {
   final WeakSet<VoidCallBack> functions = WeakSet();
 
-  void callback() => functions.forEach((element) => element.call());
+  void callback() => functions.toSet().forEach((element) => element.call());
 
   SingleListenerManager();
 }
@@ -55,9 +55,12 @@ extension ChangeNotifierCancellable on ChangeNotifier {
   @Deprecated('use bindCancellable')
   void disposeByCancellable(Cancellable cancellable) =>
       bindCancellable(cancellable);
+}
 
-  void bindCancellable(Cancellable cancellable) {
+extension ChangeNotifierCancellableV2<T extends ChangeNotifier> on T {
+  T bindCancellable(Cancellable cancellable) {
     cancellable.onCancel.then((_) => dispose());
+    return this;
   }
 }
 
@@ -106,7 +109,7 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
         controller.onCancel = () {
           listeners.remove(controller);
         };
-      });
+      }, isBroadcast: true);
       if (cancellable != null) {
         cancellable.onCancel.then((value) {
           for (var l in listeners) {
