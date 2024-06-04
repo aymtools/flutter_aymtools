@@ -1,18 +1,12 @@
 import 'package:anlifecycle/anlifecycle.dart';
-import 'package:aymtools/aymtools.dart';
 import 'package:flutter/material.dart';
 
-import 'debug/debug_config.dart';
-import 'debug/debug_demo.dart';
 import 'first.dart';
 import 'home.dart';
 import 'pageview.dart';
 import 'second.dart';
 
 void main() {
-  AnConsole.instance.addConsole('Conf', DebugConfig());
-  AnConsole.instance.addConsole('DebugDemo', DebugDemo());
-
   runApp(const MyApp());
 }
 

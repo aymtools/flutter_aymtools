@@ -5,8 +5,6 @@ toast displays, and some commonly used extensions.
 
 ## Usage
 
-### Programmable floating console
-
 ### Undoable dialog
 
 ### A dynamically changing loader

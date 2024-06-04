@@ -1,9 +1,5 @@
 library aymtools;
 
-export 'src/anconsole/console.dart';
-export 'src/anconsole/tools/events.dart';
-export 'src/anconsole/tools/logs_file.dart';
-export 'src/anconsole/widget/floating_actions.dart';
 export 'src/dialog/loading.dart';
 export 'src/floating/draggable.dart';
 export 'src/listenable/change_notifier_ext.dart';
