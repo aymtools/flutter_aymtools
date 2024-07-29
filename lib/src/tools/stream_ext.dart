@@ -8,7 +8,11 @@ extension StreamToolsExt<T> on Stream<T> {
         return event;
       });
 
-  Stream<T> repeatLatest({Duration? repeatTimeout, T? onTimeout}) {
+  Stream<T> repeatLatest(
+      {Duration? repeatTimeout,
+      T? onTimeout,
+      bool repeatError = false,
+      bool? broadcast}) {
     var done = false;
     T? latest;
 
@@ -44,8 +48,12 @@ extension StreamToolsExt<T> on Stream<T> {
       }
       currentListeners.clear();
     });
+    final isBroadcast_ = broadcast ?? isBroadcast;
     return Stream.multi((controller) {
       if (done) {
+        if (latest != null) {
+          controller.add(latest as T);
+        }
         controller.close();
         return;
       }
@@ -55,6 +63,6 @@ extension StreamToolsExt<T> on Stream<T> {
       controller.onCancel = () {
         currentListeners.remove(controller);
       };
-    }, isBroadcast: isBroadcast);
+    }, isBroadcast: isBroadcast_);
   }
 }
