@@ -8,8 +8,7 @@ class FistPage extends StatefulWidget {
   State<FistPage> createState() => _FistPageState();
 }
 
-class _FistPageState extends State<FistPage>
-    with LifecycleObserverRegisterMixin {
+class _FistPageState extends State<FistPage> with LifecycleRegistryStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

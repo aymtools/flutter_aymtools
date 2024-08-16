@@ -9,7 +9,7 @@ class SecondPage extends StatefulWidget {
 }
 
 class _SecondPageState extends State<SecondPage>
-    with LifecycleObserverRegisterMixin {
+    with LifecycleRegistryStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

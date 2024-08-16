@@ -1,7 +1,6 @@
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/material.dart';
 
-
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -12,7 +11,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage>
-    with LifecycleObserverRegisterMixin {
+    with LifecycleRegistryStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

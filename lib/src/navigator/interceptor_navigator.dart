@@ -18,7 +18,7 @@ abstract class RoutePushInterceptor<T> {
       _RoutePushInterceptorFun<T>(r);
 }
 
-abstract class RouteInterceptor<T> implements RoutePushInterceptor {
+abstract class RouteInterceptor implements RoutePushInterceptor {
   Future<T?> pushReplacement<T extends Object?, TO extends Object?>(
       Route<T> newRoute,
       {TO? result});

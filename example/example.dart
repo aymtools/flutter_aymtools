@@ -29,17 +29,10 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
         ),
         navigatorObservers: [
-          LifecycleNavigatorObserver(),
+          LifecycleNavigatorObserver.hookMode(),
           // AnConsole.instance.navigatorObserver,
         ],
-        routes: routes.map(
-          (key, value) => MapEntry(
-            key,
-            (context) => LifecycleRoutePage(
-              child: Builder(builder: value),
-            ),
-          ),
-        ),
+        routes: routes,
       ),
     );
   }
