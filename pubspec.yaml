@@ -2,7 +2,7 @@ name: aymtools
 description: "A commonly used toolkit in Flutter.
   Intended to make Flutter development more convenient.
   It includes a programmable some Listenable toolkits, data loaders, and some commonly used extensions."
-version: 1.0.0-dev.7
+version: 1.0.0-dev.8
 homepage: https://github.com/aymtools/flutter_aymtools/
 
 environment:
@@ -20,13 +20,10 @@ dependencies:
   collection: any
   intl: any
 
-  cancellable: ^2.0.1
-  weak_collections: ^1.1.0
-  anlifecycle: ^3.0.0
-  isolate_pool_executor: ^1.2.0
-  an_lifecycle_cancellable: ^1.0.0
-
-#  ffx: ^0.0.1
+  cancellable: any
+  weak_collections: any
+  anlifecycle: any
+  an_lifecycle_cancellable: any
 
 dev_dependencies:
   flutter_test:
