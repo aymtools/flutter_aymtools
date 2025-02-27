@@ -1,6 +1,3 @@
-import 'package:an_lifecycle_cancellable/an_lifecycle_cancellable.dart';
-import 'package:aymtools/aymtools.dart';
-import 'package:cancellable/cancellable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -79,9 +76,7 @@ class ListenableBuilder extends StatefulWidget {
       ListenableBuilderValueCompanion._();
 }
 
-class _ListenableBuilderState extends State<ListenableBuilder>
-    with CancellableState {
-  late Cancellable cancellable;
+class _ListenableBuilderState extends State<ListenableBuilder> {
   late Listenable _curl;
 
   void _changer() {
@@ -93,20 +88,24 @@ class _ListenableBuilderState extends State<ListenableBuilder>
   @override
   void initState() {
     super.initState();
-    cancellable = makeCancellable();
     _curl = Listenable.merge(widget.listeners);
-    _curl.addCListener(cancellable, _changer);
+    _curl.addListener(_changer);
   }
 
   @override
   void didUpdateWidget(covariant ListenableBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_areListsEqual(widget.listeners, oldWidget.listeners)) {
-      cancellable.cancel();
-      cancellable = makeCancellable();
+      _curl.removeListener(_changer);
       _curl = Listenable.merge(widget.listeners);
-      _curl.addCListener(cancellable, _changer);
+      _curl.addListener(_changer);
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _curl.removeListener(_changer);
   }
 
   @override

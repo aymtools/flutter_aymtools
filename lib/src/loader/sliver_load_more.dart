@@ -136,10 +136,7 @@ class _SliverLoadMoreAdapter extends SliverToBoxAdapter {
     return _SliverLoadMoreAdapterElement(this);
   }
 
-  const _SliverLoadMoreAdapter({
-    super.key,
-    super.child,
-  });
+  const _SliverLoadMoreAdapter({super.child});
 }
 
 class _SliverLoadMoreAdapterElement extends SingleChildRenderObjectElement {
@@ -204,7 +201,7 @@ class SliverLoadMoreControllerState extends State<SliverLoadMoreController>
   }
 
   void _checkCanLoadMore(ScrollEndNotification noti) {
-    _SliverLoadMoreAdapterElement? find = findSLMAE(noti.context as Element?);
+    _SliverLoadMoreAdapterElement? find = _findSLMAE(noti.context as Element?);
     if (find == null) {
       return;
     }
@@ -217,13 +214,13 @@ class SliverLoadMoreControllerState extends State<SliverLoadMoreController>
     }
   }
 
-  _SliverLoadMoreAdapterElement? findSLMAE(Element? element) {
+  _SliverLoadMoreAdapterElement? _findSLMAE(Element? element) {
     if (element == null) return null;
     if (element is _SliverLoadMoreAdapterElement) {
       return element;
     }
     _SliverLoadMoreAdapterElement? target;
-    element.visitChildElements((e) => target ??= findSLMAE(e));
+    element.visitChildElements((e) => target ??= _findSLMAE(e));
     return target;
   }
 }

@@ -128,15 +128,15 @@ mixin InterceptorNavigatorState on NavigatorState {
     super.pop(result);
   }
 
-  @override
-  void removeRoute(Route route) {
-    super.removeRoute(route);
-  }
-
-  @override
-  void removeRouteBelow(Route anchorRoute) {
-    super.removeRouteBelow(anchorRoute);
-  }
+  // @override
+  // void removeRoute(Route route) {
+  //   super.removeRoute(route);
+  // }
+  //
+  // @override
+  // void removeRouteBelow(Route anchorRoute) {
+  //   super.removeRouteBelow(anchorRoute);
+  // }
 
   @override
   void replaceRouteBelow<T extends Object?>(

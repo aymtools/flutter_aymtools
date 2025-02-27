@@ -1,8 +1,4 @@
-import 'package:an_lifecycle_cancellable/an_lifecycle_cancellable.dart';
-import 'package:cancellable/cancellable.dart';
 import 'package:flutter/widgets.dart';
-
-import 'widget_ext.dart';
 
 class ChangeNotifierBuilder<T extends ChangeNotifier> extends StatefulWidget {
   final T changeNotifier;
@@ -21,9 +17,7 @@ class ChangeNotifierBuilder<T extends ChangeNotifier> extends StatefulWidget {
 }
 
 class _ChangeNotifierBuilderState<T extends ChangeNotifier>
-    extends State<ChangeNotifierBuilder<T>> with CancellableState {
-  late Cancellable cancellable;
-
+    extends State<ChangeNotifierBuilder<T>> {
   void _changer() {
     try {
       setState(() {});
@@ -33,18 +27,22 @@ class _ChangeNotifierBuilderState<T extends ChangeNotifier>
   @override
   void initState() {
     super.initState();
-    cancellable = makeCancellable();
-    widget.changeNotifier.addCListener(cancellable, _changer);
+    widget.changeNotifier.addListener(_changer);
   }
 
   @override
   void didUpdateWidget(covariant ChangeNotifierBuilder<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.changeNotifier != oldWidget.changeNotifier) {
-      cancellable.cancel();
-      cancellable = makeCancellable();
-      widget.changeNotifier.addCListener(cancellable, _changer);
+      oldWidget.changeNotifier.removeListener(_changer);
+      widget.changeNotifier.addListener(_changer);
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    widget.changeNotifier.removeListener(_changer);
   }
 
   @override

@@ -59,7 +59,7 @@ class _FloatingDraggableButtonState extends State<FloatingDraggableButton> {
             _maxOffset = size;
           });
         }
-      } catch (e, st) {}
+      } catch (_) {}
     }
 
     SharedPreferences.getInstance().then((value) {
@@ -128,7 +128,9 @@ class _FloatingDraggableButtonState extends State<FloatingDraggableButton> {
           if (!_isDragging) {
             var p = event.position;
             if ((p.dx - _offsetDown!.dx).abs() < 5 ||
-                (p.dy - _offsetDown!.dy).abs() < 5) return;
+                (p.dy - _offsetDown!.dy).abs() < 5) {
+              return;
+            }
           }
           _updatePosition(event.delta);
           setState(() {

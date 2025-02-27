@@ -145,7 +145,6 @@ class _StrmBuilderConfiguration extends InheritedWidget {
       Widget loadErrWidget) builderSliverLoadErr;
 
   const _StrmBuilderConfiguration({
-    super.key,
     required Widget child,
     required this.builderLoading,
     required this.builderLoadErr,

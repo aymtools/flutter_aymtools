@@ -41,7 +41,6 @@ class ItemView extends StatefulWidget {
 }
 
 class _ItemViewState extends State<ItemView> with LifecycleRegistryStateMixin {
-  @override
   String get otherTag => 'Page index ${widget.index}';
 
   @override

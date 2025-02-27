@@ -1,8 +1,6 @@
 name: aymtools
-description: "A commonly used toolkit in Flutter.
-  Intended to make Flutter development more convenient.
-  It includes a programmable some Listenable toolkits, data loaders, and some commonly used extensions."
-version: 1.0.0-dev.9
+description: "A commonly used toolkit in Flutter. Intended to make Flutter development more convenient."
+version: 1.0.0-dev.10
 homepage: https://github.com/aymtools/flutter_aymtools/
 
 environment:
