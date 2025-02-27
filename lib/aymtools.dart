@@ -15,7 +15,6 @@ export 'src/tools/context_ext.dart';
 export 'src/tools/element_ext.dart';
 export 'src/tools/expando_ext.dart';
 export 'src/tools/never_future.dart';
-export 'src/tools/stream_ext.dart';
 export 'src/tools/string_ext.dart';
 export 'src/widgets/change_notifier_builder.dart';
 export 'src/widgets/listenable_builder.dart';

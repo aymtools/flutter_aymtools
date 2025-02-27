@@ -1,4 +1,5 @@
 import 'dart:core';
+
 import 'package:an_lifecycle_cancellable/an_lifecycle_cancellable.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:cancellable/cancellable.dart';
@@ -9,8 +10,8 @@ mixin CancellableState<W extends StatefulWidget> on State<W> {
   Cancellable? _base;
 
   Cancellable makeCancellable({Cancellable? father}) {
-    _base ??= this is LifecycleObserverRegistry
-        ? (this as LifecycleObserverRegistry).makeLiveCancellable()
+    _base ??= this is ILifecycleRegistry
+        ? (this as ILifecycleRegistry).makeLiveCancellable()
         : Cancellable();
     return _base!.makeCancellable(father: father);
   }

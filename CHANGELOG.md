@@ -1,3 +1,3 @@
 ## 1.0.0
 
-* 首个版本发表.
+* Initial version released.
