@@ -60,6 +60,7 @@ class LoadMoreController {
 typedef BuildFailWidget = Widget Function(VoidCallback retry);
 
 class SliverLoadMore extends StatefulWidget {
+  final Widget readyToLoad;
   final Widget loading;
   final BuildFailWidget loadedFail;
   final Widget loadedFinish;
@@ -69,7 +70,9 @@ class SliverLoadMore extends StatefulWidget {
     required this.loading,
     required this.loadedFail,
     Widget? loadedFinish,
-  }) : loadedFinish = loadedFinish ?? Container();
+    Widget? readyToLoad,
+  })  : loadedFinish = loadedFinish ?? Container(),
+        readyToLoad = readyToLoad ?? loading;
 
   @override
   State<SliverLoadMore> createState() => _SliverLoadMoreState();
@@ -176,6 +179,9 @@ class SliverLoadMoreControllerState extends State<SliverLoadMoreController>
   void initState() {
     super.initState();
     _controller = widget.controller ?? this;
+    WidgetsBinding.instance.addPostFrameCallback((callback) {
+      _checkCanLoadMore(context);
+    });
   }
 
   @override
@@ -194,14 +200,16 @@ class SliverLoadMoreControllerState extends State<SliverLoadMoreController>
 
   bool _handlerScrollEnd(ScrollEndNotification noti) {
     WidgetsBinding.instance.addPostFrameCallback((callback) {
-      _checkCanLoadMore(noti);
+      final context = noti.context;
+      if (context == null) return;
+      _checkCanLoadMore(context);
     });
 
     return false;
   }
 
-  void _checkCanLoadMore(ScrollEndNotification noti) {
-    _SliverLoadMoreAdapterElement? find = _findSLMAE(noti.context as Element?);
+  void _checkCanLoadMore(BuildContext context) {
+    _SliverLoadMoreAdapterElement? find = _findSLMAE(context as Element);
     if (find == null) {
       return;
     }
